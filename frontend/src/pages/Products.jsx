@@ -207,7 +207,7 @@ const Products = () => {
        <img
 
         src=
-        "https://via.placeholder.com/300"
+        "/favicon.svg"
 
         alt="product"
 

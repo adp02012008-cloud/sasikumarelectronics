@@ -262,7 +262,7 @@ const AdminProducts = () => {
 
           ||
 
-          "https://via.placeholder.com/80"
+          "/favicon.svg"
 
          }
 

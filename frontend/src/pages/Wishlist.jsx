@@ -245,7 +245,7 @@ const Wishlist = () => {
 
          ||
 
-         "https://via.placeholder.com/200"
+         "/favicon.svg"
 
         }
 

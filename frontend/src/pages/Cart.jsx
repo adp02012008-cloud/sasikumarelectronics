@@ -260,7 +260,7 @@ const Cart = () => {
 
          ||
 
-         "https://via.placeholder.com/100"
+         "/favicon.svg"
 
         }
 
