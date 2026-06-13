@@ -15,9 +15,14 @@ import AdminOrders from "./pages/AdminOrders";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import AdminUsers from "./pages/AdminUsers";
-import "./App.css";
+
+import ProtectedRoute
+from "./routes/ProtectedRoute";
 
 import Navbar from "./components/Navbar";
+
+import "./App.css";
+
 
 function App() {
 
@@ -49,51 +54,75 @@ function App() {
         />
 
         <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <Wishlist />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/checkout"
-          element={<Checkout />}
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/orders"
-          element={<Orders />}
+          element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/admin"
           element={
-            <AdminDashboard />
+            <ProtectedRoute admin={true}>
+              <AdminDashboard />
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="/admin/products"
           element={
-            <AdminProducts />
+            <ProtectedRoute admin={true}>
+              <AdminProducts />
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="/admin/orders"
           element={
-            <AdminOrders />
+            <ProtectedRoute admin={true}>
+              <AdminOrders />
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="/admin/users"
           element={
-            <AdminUsers />
+            <ProtectedRoute admin={true}>
+              <AdminUsers />
+            </ProtectedRoute>
           }
-        />
-
-        <Route
-          path="/cart"
-          element={<Cart />}
-        />
-
-        <Route
-          path="/wishlist"
-          element={<Wishlist />}
         />
 
       </Routes>

@@ -1,318 +1,435 @@
 import {
-  useEffect,
-  useState,
+ useEffect,
+ useState,
 } from "react";
 
-import axios from "../api/axios";
+
+import API from "../api/axios";
+
 
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
+ LineChart,
+ Line,
+ BarChart,
+ Bar,
+ PieChart,
+ Pie,
+ XAxis,
+ YAxis,
+ Tooltip,
+ CartesianGrid,
+ ResponsiveContainer,
 } from "recharts";
+
+
 
 const AdminDashboard = () => {
 
- const [dashboard,setDashboard] = useState({});
- const [sales,setSales] = useState({});
- const [lowStock,setLowStock] = useState([]);
- const [monthly,setMonthly] = useState({});
- const [revenueChart,setRevenueChart] = useState([]);
- const [topProducts,setTopProducts] = useState([]);
- const [users,setUsers] = useState([]);
+
+ const [dashboard,setDashboard] =
+ useState({});
+
+
+ const [sales,setSales] =
+ useState({});
+
+
+ const [lowStock,setLowStock] =
+ useState([]);
+
+
+ const [revenueChart,setRevenueChart] =
+ useState([]);
+
+
+ const [users,setUsers] =
+ useState([]);
+
+
 
  useEffect(()=>{
+
   fetchAnalytics();
+
  },[]);
+
+
+
+
 
  const fetchAnalytics =
  async()=>{
 
+
   try{
 
-   const token =
-   localStorage.getItem("token");
 
-   const config = {
+   const token =
+   localStorage.getItem(
+    "token"
+   );
+
+
+   const config={
+
     headers:{
-     Authorization:`Bearer ${token}`
+
+     Authorization:
+     `Bearer ${token}`
+
     }
+
    };
 
+
+
+
    const dashboardRes =
-   await axios.get("/admin/dashboard",config);
+   await API.get(
+    "/admin/dashboard",
+    config
+   );
+
 
    const salesRes =
-   await axios.get("/admin/sales-stats",config);
+   await API.get(
+    "/admin/sales-stats",
+    config
+   );
+
 
    const stockRes =
-   await axios.get("/admin/low-stock",config);
+   await API.get(
+    "/admin/low-stock",
+    config
+   );
 
-   const monthlyRes =
-   await axios.get("/admin/monthly-revenue",config);
 
    const revenueRes =
-   await axios.get("/admin/revenue-chart",config);
+   await API.get(
+    "/admin/revenue-chart",
+    config
+   );
 
-   const productRes =
-   await axios.get("/admin/top-products",config);
 
    const userRes =
-   await axios.get("/admin/user-growth",config);
+   await API.get(
+    "/admin/user-growth",
+    config
+   );
 
-   setDashboard(dashboardRes.data);
-   setSales(salesRes.data);
-   setLowStock(stockRes.data.products || []);
-   setMonthly(monthlyRes.data.monthly || {});
-   setRevenueChart(revenueRes.data.chart || []);
-   setTopProducts(productRes.data.products || []);
-   setUsers(userRes.data.users || []);
+
+
+
+
+   setDashboard(
+    dashboardRes.data
+   );
+
+
+   setSales(
+    salesRes.data
+   );
+
+
+   setLowStock(
+    stockRes.data.products || []
+   );
+
+
+   setRevenueChart(
+    revenueRes.data.chart || []
+   );
+
+
+   setUsers(
+    userRes.data.users || []
+   );
+
+
 
   }
   catch(error){
+
+
    console.log(error);
+
+
   }
+
 
  };
 
- const pieData = [
-  {
-   name:"Orders",
-   value:sales.totalOrders || 0
-  },
-  {
-   name:"Products",
-   value:dashboard.products || 0
-  },
-  {
-   name:"Users",
-   value:dashboard.users || 0
-  }
- ];
+
+
+
+
 
  return(
 
-  <div
-   style={{
-    padding:"20px"
-   }}
-  >
 
-   <h1>
-    Admin Analytics Dashboard
-   </h1>
+ <div className="admin-page">
 
-   <hr/>
 
-   <h2>
-    Overall
-   </h2>
 
-   <p>Users : {dashboard.users || 0}</p>
-   <p>Products : {dashboard.products || 0}</p>
-   <p>Orders : {dashboard.orders || 0}</p>
-   <p>Revenue : ₹{dashboard.revenue || 0}</p>
+  <h1>
+   Admin Dashboard
+  </h1>
 
-   <hr/>
 
-   <h2>
-    Sales
-   </h2>
 
-   <p>Total Orders : {sales.totalOrders || 0}</p>
-   <p>Total Sales : ₹{sales.totalSales || 0}</p>
 
-   <hr/>
+  <div className="stats-grid">
 
-   <h2>
-    Revenue Line Chart
-   </h2>
 
-   <div
-    style={{
-     width:"100%",
-     height:"300px"
-    }}
-   >
 
-    <ResponsiveContainer>
+   <div className="stat-card">
 
-     <LineChart data={revenueChart}>
+    <h3>Users</h3>
 
-      <CartesianGrid strokeDasharray="3 3" />
-
-      <XAxis dataKey="_id" />
-
-      <YAxis />
-
-      <Tooltip />
-
-      <Line
-       type="monotone"
-       dataKey="revenue"
-      />
-
-     </LineChart>
-
-    </ResponsiveContainer>
+    <h2>
+     {dashboard.users || 0}
+    </h2>
 
    </div>
 
-   <hr/>
 
-   <h2>
-    User Growth Bar Chart
-   </h2>
 
-   <div
-    style={{
-     width:"100%",
-     height:"300px"
-    }}
-   >
 
-    <ResponsiveContainer>
+   <div className="stat-card">
 
-     <BarChart data={users}>
+    <h3>Products</h3>
 
-      <CartesianGrid strokeDasharray="3 3" />
-
-      <XAxis dataKey="_id" />
-
-      <YAxis />
-
-      <Tooltip />
-
-      <Bar dataKey="totalUsers" />
-
-     </BarChart>
-
-    </ResponsiveContainer>
+    <h2>
+     {dashboard.products || 0}
+    </h2>
 
    </div>
 
-   <hr/>
 
-   <h2>
-    Store Summary Pie Chart
-   </h2>
 
-   <div
-    style={{
-     width:"100%",
-     height:"300px"
-    }}
-   >
 
-    <ResponsiveContainer>
+   <div className="stat-card">
 
-     <PieChart>
+    <h3>Orders</h3>
 
-      <Pie
-       data={pieData}
-       dataKey="value"
-       nameKey="name"
-       outerRadius={100}
-       label
-      >
-
-       {
-        pieData.map(
-         (entry,index)=>(
-          <Cell
-           key={index}
-          />
-         )
-        )
-       }
-
-      </Pie>
-
-      <Tooltip />
-
-     </PieChart>
-
-    </ResponsiveContainer>
+    <h2>
+     {dashboard.orders || 0}
+    </h2>
 
    </div>
 
-   <hr/>
 
-   <h2>
-    Low Stock Products
-   </h2>
 
-   {
-    lowStock.length === 0
-    ? (
-     <p>No Low Stock Products</p>
-    )
-    : (
-     lowStock.map(
-      product=>(
-       <p key={product._id}>
-        {product.name}
-        {" - "}
-        Stock : {product.stock}
-       </p>
-      )
-     )
-    )
-   }
 
-   <hr/>
 
-   <h2>
-    Monthly Revenue
-   </h2>
+   <div className="stat-card">
 
-   {
-    Object.entries(monthly).map(
-     ([month,value])=>(
-      <p key={month}>
-       {month} : ₹{value}
-      </p>
-     )
-    )
-   }
+    <h3>Revenue</h3>
 
-   <hr/>
+    <h2>
+     ₹{dashboard.revenue || 0}
+    </h2>
 
-   <h2>
-    Top Products
-   </h2>
+   </div>
 
-   {
-    topProducts.length === 0
-    ? (
-     <p>No Sales Data</p>
-    )
-    : (
-     topProducts.map(
-      item=>(
-       <p key={item._id}>
-        Product: {item._id}
-        <br/>
-        Sold: {item.totalSold}
-       </p>
-      )
-     )
-    )
-   }
+
 
   </div>
 
+
+
+
+
+
+
+
+  <div className="chart-box">
+
+
+   <h2>
+    Revenue Analytics
+   </h2>
+
+
+   <ResponsiveContainer
+    width="100%"
+    height={300}
+   >
+
+
+    <LineChart
+     data={revenueChart}
+    >
+
+
+     <CartesianGrid
+      strokeDasharray="3 3"
+     />
+
+
+     <XAxis
+      dataKey="_id"
+     />
+
+
+     <YAxis />
+
+
+     <Tooltip />
+
+
+     <Line
+      dataKey="revenue"
+     />
+
+
+    </LineChart>
+
+
+   </ResponsiveContainer>
+
+
+
+  </div>
+
+
+
+
+
+
+
+
+
+  <div className="chart-box">
+
+
+   <h2>
+    User Growth
+   </h2>
+
+
+   <ResponsiveContainer
+    width="100%"
+    height={300}
+   >
+
+
+    <BarChart
+     data={users}
+    >
+
+
+     <CartesianGrid
+      strokeDasharray="3 3"
+     />
+
+
+     <XAxis
+      dataKey="_id"
+     />
+
+
+     <YAxis/>
+
+
+     <Tooltip/>
+
+
+     <Bar
+      dataKey="totalUsers"
+     />
+
+
+    </BarChart>
+
+
+
+   </ResponsiveContainer>
+
+
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <div className="chart-box">
+
+
+   <h2>
+
+    Low Stock Products
+
+   </h2>
+
+
+
+
+   {
+
+    lowStock.length===0
+
+    ?
+
+    <p>
+
+     No low stock products
+
+    </p>
+
+    :
+
+    lowStock.map(
+
+     item=>(
+
+
+      <p key={item._id}>
+
+
+       {item.name}
+
+
+       {" - Stock : "}
+
+
+       {item.stock}
+
+
+      </p>
+
+
+     )
+
+    )
+
+   }
+
+
+
+  </div>
+
+
+
+
+
+
+ </div>
+
+
  );
 
+
 };
+
+
+
 
 export default AdminDashboard;

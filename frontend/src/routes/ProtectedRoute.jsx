@@ -1,17 +1,97 @@
-import { Navigate } from "react-router-dom";
+import {
+ Navigate,
+} from "react-router-dom";
 
-const ProtectedRoute = ({
-  children,
-}) => {
 
-  const token =
-    localStorage.getItem(
-      "token"
-    );
+import {
+ useContext,
+} from "react";
 
-  return token
-    ? children
-    : <Navigate to="/login" />;
+
+import {
+ AuthContext,
+} from "../context/AuthContext";
+
+
+
+
+const ProtectedRoute =
+({
+ children,
+ admin = false,
+})=>{
+
+
+ const {
+
+  user,
+
+  isAuthenticated,
+
+  isAdmin,
+
+ } =
+ useContext(
+  AuthContext
+ );
+
+
+
+
+
+ if(
+  !isAuthenticated
+ ){
+
+
+  return (
+
+   <Navigate
+
+    to="/login"
+
+   />
+
+  );
+
+
+ }
+
+
+
+
+
+
+
+ if(
+  admin &&
+  !isAdmin
+ ){
+
+
+  return (
+
+   <Navigate
+
+    to="/"
+
+   />
+
+  );
+
+
+ }
+
+
+
+
+
+
+ return children;
+
+
 };
+
+
 
 export default ProtectedRoute;

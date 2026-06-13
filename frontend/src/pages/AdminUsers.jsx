@@ -1,134 +1,439 @@
-import { useEffect, useState } from "react";
-import axios from "../api/axios";
+import {
+ useEffect,
+ useState,
+} from "react";
+
+
+import API from "../api/axios";
+
+
 
 const AdminUsers = () => {
 
-  const [users, setUsers] =
-    useState([]);
 
-  useEffect(() => {
+ const [
+  users,
+  setUsers
+ ] =
+ useState([]);
 
-    fetchUsers();
 
-  }, []);
 
-  const fetchUsers =
-    async () => {
 
-      try {
 
-        const { data } =
-          await axios.get(
-            "/admin/users"
-          );
 
-        setUsers(
-          data.users
-        );
+ useEffect(()=>{
 
-      }
-      catch(error){
 
-        console.log(error);
+  fetchUsers();
 
-      }
 
-    };
+ },[]);
 
-  const deleteUser =
-    async (id) => {
 
-      try {
 
-        await axios.delete(
-          `/admin/user/${id}`
-        );
 
-        fetchUsers();
 
-      }
-      catch(error){
 
-        console.log(error);
 
-      }
+ const fetchUsers =
+ async()=>{
 
-    };
 
-  return (
+  try{
 
-    <div>
 
-      <h1>
-        Manage Users
-      </h1>
+   const token =
+   localStorage.getItem(
+    "token"
+   );
 
-      <table border="1">
 
-        <thead>
 
-          <tr>
 
-            <th>
-              Name
-            </th>
+   const res =
+   await API.get(
 
-            <th>
-              Email
-            </th>
+    "/admin/users",
 
-            <th>
-              Action
-            </th>
+    {
 
-          </tr>
+     headers:{
 
-        </thead>
 
-        <tbody>
+      Authorization:
+      `Bearer ${token}`
 
-          {users.map(
-            (user) => (
 
-              <tr
-                key={user._id}
-              >
+     }
 
-                <td>
-                  {user.name}
-                </td>
 
-                <td>
-                  {user.email}
-                </td>
+    }
 
-                <td>
+   );
 
-                  <button
-                    onClick={() =>
-                      deleteUser(
-                        user._id
-                      )
-                    }
-                  >
-                    Delete
-                  </button>
 
-                </td>
 
-              </tr>
 
-            )
-          )}
 
-        </tbody>
+   setUsers(
 
-      </table>
+    res.data.users
+    ||
+    []
 
-    </div>
+   );
 
-  );
+
+
+
+  }
+  catch(error){
+
+
+
+   console.log(
+    error
+   );
+
+
+
+  }
+
+
+
+ };
+
+
+
+
+
+
+
+
+
+ const deleteUser =
+ async(id)=>{
+
+
+  if(
+   !window.confirm(
+    "Delete this user?"
+   )
+  )
+  return;
+
+
+
+
+
+  try{
+
+
+   const token =
+   localStorage.getItem(
+    "token"
+   );
+
+
+
+
+
+   await API.delete(
+
+    `/admin/user/${id}`,
+
+    {
+
+     headers:{
+
+
+      Authorization:
+      `Bearer ${token}`
+
+
+     }
+
+
+    }
+
+
+   );
+
+
+
+
+
+   fetchUsers();
+
+
+
+
+
+  }
+  catch(error){
+
+
+
+   alert(
+    "Delete Failed"
+   );
+
+
+
+   console.log(
+    error
+   );
+
+
+
+  }
+
+
+
+ };
+
+
+
+
+
+
+
+
+
+ return(
+
+
+ <div className="admin-users">
+
+
+
+  <h1>
+
+   User Management
+
+  </h1>
+
+
+
+
+
+
+  <div className="table-box">
+
+
+
+   <table>
+
+
+
+    <thead>
+
+
+     <tr>
+
+
+      <th>
+
+       Name
+
+      </th>
+
+
+
+      <th>
+
+       Email
+
+      </th>
+
+
+
+
+      <th>
+
+       Role
+
+      </th>
+
+
+
+
+      <th>
+
+       Action
+
+      </th>
+
+
+
+     </tr>
+
+
+    </thead>
+
+
+
+
+
+
+
+
+    <tbody>
+
+
+
+    {
+
+
+     users.map(
+
+      user=>(
+
+
+
+
+      <tr
+
+       key={
+        user._id
+       }
+
+      >
+
+
+
+
+       <td>
+
+
+        {
+         user.name
+        }
+
+
+       </td>
+
+
+
+
+
+
+       <td>
+
+
+        {
+         user.email
+        }
+
+
+       </td>
+
+
+
+
+
+
+
+       <td>
+
+
+        <span className="role-badge">
+
+
+         {
+          user.role
+         }
+
+
+        </span>
+
+
+       </td>
+
+
+
+
+
+
+
+
+       <td>
+
+
+
+        <button
+
+         className="delete-btn"
+
+         onClick={
+          ()=>
+
+          deleteUser(
+
+           user._id
+
+          )
+
+         }
+
+        >
+
+
+         Delete
+
+
+        </button>
+
+
+
+
+       </td>
+
+
+
+
+
+
+      </tr>
+
+
+
+
+      )
+
+     )
+
+
+    }
+
+
+
+
+    </tbody>
+
+
+
+
+   </table>
+
+
+
+  </div>
+
+
+
+
+
+ </div>
+
+
+ );
+
 
 };
+
+
+
 
 export default AdminUsers;

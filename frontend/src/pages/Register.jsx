@@ -1,92 +1,298 @@
-import { useState } from "react";
+import {
+  useState,
+} from "react";
+
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
 import API from "../api/axios";
 
+
 const Register = () => {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
 
-    try {
-      const res = await API.post(
-        "/auth/register",
-        form
-      );
+ const navigate =
+ useNavigate();
 
-      alert(
-        res.data.message ||
-        "Registration Successful"
-      );
 
-    } catch (error) {
+ const [
+  form,
+  setForm
+ ] =
+ useState({
 
-      alert(
-        error.response?.data?.message ||
-        "Registration Failed"
-      );
+  name:"",
+  email:"",
+  password:""
 
+ });
+
+
+ const [
+  loading,
+  setLoading
+ ] =
+ useState(false);
+
+
+
+
+
+ const handleSubmit =
+ async(e)=>{
+
+
+  e.preventDefault();
+
+
+  try{
+
+
+   setLoading(
+    true
+   );
+
+
+   const res =
+   await API.post(
+
+    "/auth/register",
+
+    form
+
+   );
+
+
+
+   alert(
+
+    res.data.message ||
+    "Account Created Successfully"
+
+   );
+
+
+
+   navigate(
+    "/login"
+   );
+
+
+
+  }
+  catch(error){
+
+
+   alert(
+
+    error.response?.data?.message
+    ||
+    "Registration Failed"
+
+   );
+
+
+  }
+  finally{
+
+
+   setLoading(
+    false
+   );
+
+
+  }
+
+
+ };
+
+
+
+
+
+
+ return(
+
+
+ <div className="auth-page">
+
+
+  <div className="auth-card">
+
+
+   <h1>
+    Create Account
+   </h1>
+
+
+   <p className="auth-subtitle">
+    Join Sasikumar Electronics
+   </p>
+
+
+
+
+   <form
+    onSubmit={
+     handleSubmit
     }
-  };
+   >
 
-  return (
-    <div>
-      <h2>Register</h2>
 
-      <form onSubmit={handleSubmit}>
+    <input
 
-        <input
-          type="text"
-          placeholder="Name"
-          onChange={(e) =>
-            setForm({
-              ...form,
-              name: e.target.value,
-            })
-          }
-        />
+     type="text"
 
-        <br />
-        <br />
+     placeholder="Full Name"
 
-        <input
-          type="email"
-          placeholder="Email"
-          onChange={(e) =>
-            setForm({
-              ...form,
-              email: e.target.value,
-            })
-          }
-        />
+     required
 
-        <br />
-        <br />
+     value={
+      form.name
+     }
 
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) =>
-            setForm({
-              ...form,
-              password: e.target.value,
-            })
-          }
-        />
+     onChange={
+      (e)=>
 
-        <br />
-        <br />
+      setForm({
 
-        <button type="submit">
-          Register
-        </button>
+       ...form,
 
-      </form>
-    </div>
-  );
+       name:
+       e.target.value
+
+      })
+
+     }
+
+    />
+
+
+
+
+    <input
+
+     type="email"
+
+     placeholder="Email Address"
+
+     required
+
+     value={
+      form.email
+     }
+
+
+     onChange={
+      (e)=>
+
+      setForm({
+
+       ...form,
+
+       email:
+       e.target.value
+
+      })
+
+     }
+
+    />
+
+
+
+
+
+    <input
+
+     type="password"
+
+     placeholder="Password"
+
+     required
+
+     value={
+      form.password
+     }
+
+
+     onChange={
+      (e)=>
+
+      setForm({
+
+       ...form,
+
+       password:
+       e.target.value
+
+      })
+
+     }
+
+    />
+
+
+
+
+
+
+    <button
+     disabled={
+      loading
+     }
+    >
+
+
+     {
+      loading
+      ?
+      "Creating..."
+      :
+      "Create Account"
+     }
+
+
+    </button>
+
+
+
+   </form>
+
+
+
+
+
+   <p className="switch-text">
+
+    Already have an account?
+
+
+    <Link to="/login">
+
+     Login
+
+    </Link>
+
+
+   </p>
+
+
+
+
+  </div>
+
+
+ </div>
+
+
+ );
+
+
 };
+
+
 
 export default Register;

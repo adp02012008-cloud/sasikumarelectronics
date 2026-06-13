@@ -1,163 +1,427 @@
 import {
-  useEffect,
-  useState,
+ useEffect,
+ useState,
 } from "react";
 
-import axios from "axios";
+
+import API from "../api/axios";
+
+
 
 const AdminProducts = () => {
 
-  const [
-    products,
-    setProducts
-  ] = useState([]);
 
-  useEffect(() => {
+ const [
+  products,
+  setProducts
+ ] =
+ useState([]);
 
-    fetchProducts();
 
-  }, []);
 
-  const fetchProducts =
-    async () => {
 
-      try {
+ useEffect(()=>{
 
-        const { data } =
-          await axios.get(
-            "http://localhost:5000/api/products"
-          );
 
-        setProducts(
-          data.products
-        );
+  fetchProducts();
 
-      }
-      catch(error){
 
-        console.log(error);
+ },[]);
 
-      }
 
-    };
 
-  const deleteProduct =
-    async (id) => {
 
-      try {
 
-        await axios.delete(
-          `http://localhost:5000/api/products/${id}`
-        );
 
-        fetchProducts();
+ const fetchProducts =
+ async()=>{
 
-      }
-      catch(error){
 
-        console.log(error);
+  try{
 
-      }
 
-    };
+   const res =
+   await API.get(
+    "/products"
+   );
 
-  return (
 
-    <div>
 
-      <h1>
-        Product Management
-      </h1>
+   setProducts(
 
-      <table
-        border="1"
-        cellPadding="10"
+    res.data.products
+    ||
+    []
+
+   );
+
+
+
+  }
+  catch(error){
+
+
+   console.log(
+    error
+   );
+
+
+  }
+
+
+ };
+
+
+
+
+
+
+
+ const deleteProduct =
+ async(id)=>{
+
+
+  if(
+   !window.confirm(
+    "Delete this product?"
+   )
+  )
+  return;
+
+
+
+  try{
+
+
+   const token =
+   localStorage.getItem(
+    "token"
+   );
+
+
+
+   await API.delete(
+
+    `/products/${id}`,
+
+    {
+
+     headers:{
+
+      Authorization:
+      `Bearer ${token}`
+
+     }
+
+    }
+
+   );
+
+
+
+   fetchProducts();
+
+
+
+  }
+  catch(error){
+
+
+   alert(
+    "Delete Failed"
+   );
+
+
+   console.log(
+    error
+   );
+
+
+  }
+
+
+ };
+
+
+
+
+
+
+
+
+
+
+ return(
+
+
+ <div className="admin-products">
+
+
+
+  <h1>
+
+   Product Management
+
+  </h1>
+
+
+
+
+
+
+  <div className="table-box">
+
+
+
+  <table>
+
+
+
+   <thead>
+
+
+    <tr>
+
+
+     <th>
+      Image
+     </th>
+
+
+     <th>
+      Product
+     </th>
+
+
+
+     <th>
+      Category
+     </th>
+
+
+
+     <th>
+      Price
+     </th>
+
+
+
+     <th>
+      Stock
+     </th>
+
+
+
+     <th>
+      Action
+     </th>
+
+
+    </tr>
+
+
+
+   </thead>
+
+
+
+
+
+
+
+   <tbody>
+
+
+   {
+
+
+    products.map(
+
+     product=>(
+
+
+
+      <tr
+       key={
+        product._id
+       }
       >
 
-        <thead>
 
-          <tr>
 
-            <th>
-              Name
-            </th>
+       <td>
 
-            <th>
-              Category
-            </th>
 
-            <th>
-              Price
-            </th>
+        <img
 
-            <th>
-              Stock
-            </th>
+         className="admin-img"
 
-            <th>
-              Actions
-            </th>
+         src={
 
-          </tr>
+          product.images?.[0]?.url
 
-        </thead>
+          ||
 
-        <tbody>
+          "https://via.placeholder.com/80"
 
-          {
-            products.map(
-              (product) => (
+         }
 
-                <tr
-                  key={
-                    product._id
-                  }
-                >
+        />
 
-                  <td>
-                    {product.name}
-                  </td>
 
-                  <td>
-                    {product.category}
-                  </td>
+       </td>
 
-                  <td>
-                    ₹{product.price}
-                  </td>
 
-                  <td>
-                    {product.stock}
-                  </td>
 
-                  <td>
 
-                    <button
-                      onClick={() =>
-                        deleteProduct(
-                          product._id
-                        )
-                      }
-                    >
-                      Delete
-                    </button>
 
-                  </td>
 
-                </tr>
+       <td>
 
-              )
-            )
-          }
+        {
+         product.name
+        }
 
-        </tbody>
+       </td>
 
-      </table>
 
-    </div>
 
-  );
+
+
+
+       <td>
+
+        {
+         product.category
+        }
+
+       </td>
+
+
+
+
+
+
+       <td>
+
+        ₹
+
+        {
+         product.price
+        }
+
+       </td>
+
+
+
+
+
+
+       <td>
+
+
+        <span
+
+         className={
+
+          product.stock > 5
+
+          ?
+
+          "stock-ok"
+
+          :
+
+          "stock-low"
+
+         }
+
+        >
+
+
+        {
+         product.stock
+        }
+
+
+        </span>
+
+
+       </td>
+
+
+
+
+
+
+
+       <td>
+
+
+        <button
+
+         className="delete-btn"
+
+
+         onClick={
+          ()=>
+
+          deleteProduct(
+
+           product._id
+
+          )
+
+         }
+
+        >
+
+
+         Delete
+
+
+        </button>
+
+
+
+       </td>
+
+
+
+
+
+      </tr>
+
+
+     )
+
+    )
+
+   }
+
+
+   </tbody>
+
+
+
+
+  </table>
+
+
+
+  </div>
+
+
+
+ </div>
+
+
+ );
+
 
 };
+
+
+
 
 export default AdminProducts;

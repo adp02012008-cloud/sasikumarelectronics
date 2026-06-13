@@ -1,94 +1,349 @@
-import { useState } from "react";
+import {
+ useState,
+ useContext,
+} from "react";
+
+
+import {
+ Link,
+ useNavigate,
+} from "react-router-dom";
+
 
 import API from "../api/axios";
 
-import { useContext } from "react";
 
-import { AuthContext } from "../context/AuthContext";
+import {
+ AuthContext,
+} from "../context/AuthContext";
+
+
+
 
 const Login = () => {
 
-  const { login } =
-    useContext(AuthContext);
 
-  const [email, setEmail] =
-    useState("");
+ const navigate =
+ useNavigate();
 
-  const [password, setPassword] =
-    useState("");
 
-  const handleSubmit =
-    async (e) => {
 
-      e.preventDefault();
+ const {
+  login
+ } =
+ useContext(
+  AuthContext
+ );
 
-      try {
 
-        const res =
-          await API.post(
-            "/auth/login",
-            {
-              email,
-              password,
-            }
-          );
 
-        login(
-          res.data.user,
-          res.data.token
-        );
+ const [
+  email,
+  setEmail
+ ] =
+ useState("");
 
-        alert("Login Successful");
 
-      } catch (error) {
 
-        alert(
-          error.response?.data?.message ||
-          "Login Failed"
-        );
+ const [
+  password,
+  setPassword
+ ] =
+ useState("");
 
-      }
-    };
 
-  return (
-    <div>
-      <h2>Login</h2>
 
-      <form onSubmit={handleSubmit}>
+ const [
+  loading,
+  setLoading
+ ] =
+ useState(false);
 
-        <input
-          type="email"
-          placeholder="Email"
-          onChange={(e) =>
-            setEmail(
-              e.target.value
-            )
-          }
-        />
 
-        <br />
-        <br />
 
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) =>
-            setPassword(
-              e.target.value
-            )
-          }
-        />
 
-        <br />
-        <br />
 
-        <button type="submit">
-          Login
-        </button>
 
-      </form>
-    </div>
-  );
+
+ const handleSubmit =
+ async(e)=>{
+
+
+  e.preventDefault();
+
+
+
+  try{
+
+
+   setLoading(
+    true
+   );
+
+
+
+   const res =
+   await API.post(
+
+    "/auth/login",
+
+    {
+
+     email,
+
+     password
+
+    }
+
+   );
+
+
+
+
+   login(
+
+    res.data.user,
+
+    res.data.token
+
+   );
+
+
+
+
+   alert(
+    "Login Successful"
+   );
+
+
+
+   if(
+    res.data.user.role
+    ===
+    "admin"
+   ){
+
+
+    navigate(
+     "/admin"
+    );
+
+
+   }
+   else{
+
+
+    navigate(
+     "/products"
+    );
+
+
+   }
+
+
+
+
+  }
+  catch(error){
+
+
+
+   alert(
+
+    error.response?.data?.message
+    ||
+    "Login Failed"
+
+   );
+
+
+
+  }
+  finally{
+
+
+   setLoading(
+    false
+   );
+
+
+  }
+
+
+
+ };
+
+
+
+
+
+
+
+
+
+ return(
+
+
+ <div className="auth-page">
+
+
+
+  <div className="auth-card">
+
+
+
+   <h1>
+    Welcome Back
+   </h1>
+
+
+
+   <p className="auth-subtitle">
+
+    Login to Sasikumar Electronics
+
+   </p>
+
+
+
+
+
+   <form
+    onSubmit={
+     handleSubmit
+    }
+   >
+
+
+
+
+    <input
+
+     type="email"
+
+     placeholder="Email Address"
+
+     required
+
+     value={
+      email
+     }
+
+     onChange={
+      (e)=>
+
+      setEmail(
+
+       e.target.value
+
+      )
+
+     }
+
+    />
+
+
+
+
+
+
+
+    <input
+
+     type="password"
+
+     placeholder="Password"
+
+     required
+
+     value={
+      password
+     }
+
+
+     onChange={
+      (e)=>
+
+      setPassword(
+
+       e.target.value
+
+      )
+
+     }
+
+    />
+
+
+
+
+
+
+
+
+    <button
+     disabled={
+      loading
+     }
+    >
+
+
+     {
+
+      loading
+      ?
+      "Logging in..."
+      :
+      "Login"
+
+     }
+
+
+    </button>
+
+
+
+
+   </form>
+
+
+
+
+
+
+
+   <p className="switch-text">
+
+
+    New customer?
+
+
+    <Link to="/register">
+
+     Create Account
+
+    </Link>
+
+
+   </p>
+
+
+
+
+
+  </div>
+
+
+
+ </div>
+
+
+ );
+
+
 };
+
+
+
 
 export default Login;

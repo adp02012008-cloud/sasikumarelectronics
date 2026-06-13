@@ -1,114 +1,318 @@
-import axios from "axios";
+import {
+ useEffect,
+ useState,
+} from "react";
 
-function Checkout() {
+import API from "../api/axios";
 
-  const handlePayment =
-  async () => {
+import {
+ useNavigate,
+} from "react-router-dom";
 
-    try {
 
-      const { data } =
-      await axios.post(
-        "http://localhost:5000/api/payment/create-order",
-        {
-          amount: 500
-        }
-      );
+const Checkout = () => {
 
-      const options = {
+ const navigate =
+ useNavigate();
 
-        key:
-        import.meta.env
-        .VITE_RAZORPAY_KEY_ID,
+ const [
+  cart,
+  setCart
+ ] =
+ useState([]);
 
-        amount:
-        data.order.amount,
+ const [
+  loading,
+  setLoading
+ ] =
+ useState(false);
 
-        currency:
-        data.order.currency,
 
-        name:
-        "Dhiwakar Store",
+ useEffect(()=>{
 
-        description:
-        "Order Payment",
+  fetchCart();
 
-        order_id:
-        data.order.id,
+ },[]);
 
-        handler:
-        function(response){
 
-          alert(
-            "Payment Success\n" +
-            response
-            .razorpay_payment_id
-          );
+ const fetchCart =
+ async()=>{
 
-          console.log(
-            response
-          );
+  try{
 
-        }
+   const token =
+   localStorage.getItem(
+    "token"
+   );
 
-      };
-
-      const razorpay =
-      new window.Razorpay(
-        options
-      );
-
-      razorpay.open();
-
+   const res =
+   await API.get(
+    "/cart",
+    {
+     headers:{
+      Authorization:
+      `Bearer ${token}`
+     }
     }
-    catch(error){
+   );
 
-  console.error(
-    "Payment Error:",
-    error
-  );
+   setCart(
+    res.data.cart.items || []
+   );
 
-  if(
-    error.response
-  ){
-    console.log(
-      error.response.data
-    );
+  }
+  catch(error){
+
+   console.log(error);
+
   }
 
-  alert(
-    "Payment Failed. Check browser console."
-  );
+ };
 
-}
 
-  };
+ const total =
+ cart.reduce(
+  (sum,item)=>
+  sum +
+  item.product.price *
+  item.quantity,
+  0
+ );
 
-  return (
 
-    <div
-      style={{
-        textAlign:"center",
-        marginTop:"100px"
-      }}
-    >
+ const handlePayment =
+ async()=>{
 
-      <h1>
-        Checkout
-      </h1>
+  if(total <= 0){
 
-      <button
-        onClick={
-          handlePayment
+   alert(
+    "Cart is empty"
+   );
+
+   return;
+
+  }
+
+  try{
+
+   setLoading(true);
+
+   const token =
+   localStorage.getItem(
+    "token"
+   );
+
+   const {data} =
+   await API.post(
+    "/payment/create-order",
+    {
+     amount:
+     total
+    },
+    {
+     headers:{
+      Authorization:
+      `Bearer ${token}`
+     }
+    }
+   );
+
+   const options = {
+
+    key:
+    import.meta.env
+    .VITE_RAZORPAY_KEY_ID,
+
+    amount:
+    data.order.amount,
+
+    currency:
+    data.order.currency,
+
+    name:
+    "Sasikumar Electronics",
+
+    description:
+    "Order Payment",
+
+    order_id:
+    data.order.id,
+
+    handler:
+    async function(response){
+
+     await API.post(
+      "/orders",
+      {
+       user:
+       JSON.parse(
+        localStorage.getItem("user")
+       ).id,
+
+       orderItems:
+       cart.map(
+        item=>({
+         product:
+         item.product._id,
+
+         quantity:
+         item.quantity,
+
+         price:
+         item.product.price
+        })
+       ),
+
+       shippingAddress:{
+        address:"Customer Address",
+        city:"City",
+        state:"State",
+        pincode:"000000",
+        country:"India"
+       },
+
+       paymentMethod:
+       "Razorpay",
+
+       paymentInfo:{
+        razorpayOrderId:
+        data.order.id,
+
+        razorpayPaymentId:
+        response.razorpay_payment_id
+       },
+
+       totalPrice:
+       total
+      },
+      {
+       headers:{
+        Authorization:
+        `Bearer ${token}`
+       }
+      }
+     );
+
+     alert(
+      "Payment Successful. Order Placed."
+     );
+
+     navigate(
+      "/orders"
+     );
+
+    },
+
+    theme:{
+     color:"#2563eb"
+    }
+
+   };
+
+   const razorpay =
+   new window.Razorpay(
+    options
+   );
+
+   razorpay.open();
+
+  }
+  catch(error){
+
+   console.log(error);
+
+   alert(
+    "Payment Failed"
+   );
+
+  }
+  finally{
+
+   setLoading(false);
+
+  }
+
+ };
+
+
+ return(
+
+  <div className="checkout-page">
+
+   <div className="checkout-card">
+
+    <h1>
+     Checkout
+    </h1>
+
+    <p>
+     Review your order before payment
+    </p>
+
+    {
+     cart.length === 0
+     ? (
+      <h3>
+       Your cart is empty
+      </h3>
+     )
+     : (
+      <>
+
+       {
+        cart.map(
+         item=>(
+
+          <div
+           key={item._id}
+           className="checkout-item"
+          >
+
+           <span>
+            {item.product.name}
+           </span>
+
+           <span>
+            {item.quantity}
+            {" × ₹"}
+            {item.product.price}
+           </span>
+
+          </div>
+
+         )
+        )
+       }
+
+       <hr/>
+
+       <h2>
+        Total: ₹{total}
+       </h2>
+
+       <button
+        onClick={handlePayment}
+        disabled={loading}
+       >
+        {
+         loading
+         ?
+         "Processing..."
+         :
+         `Pay ₹${total}`
         }
-      >
-        Pay ₹500
-      </button>
+       </button>
 
-    </div>
+      </>
+     )
+    }
 
-  );
+   </div>
 
-}
+  </div>
+
+ );
+
+};
 
 export default Checkout;

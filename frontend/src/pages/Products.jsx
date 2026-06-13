@@ -1,109 +1,355 @@
 import {
-  useEffect,
-  useState,
+ useEffect,
+ useState,
 } from "react";
+
 
 import API
 from "../api/axios";
 
+
+
 const Products = () => {
 
-  const [
-    products,
-    setProducts,
-  ] = useState([]);
 
-  useEffect(() => {
+ const [
+  products,
+  setProducts
+ ] =
+ useState([]);
 
-    fetchProducts();
 
-  }, []);
 
-  const fetchProducts =
-    async () => {
+ const [
+  loading,
+  setLoading
+ ] =
+ useState(true);
 
-      try {
 
-        const res =
-        await API.get(
-          "/products"
-        );
 
-        setProducts(
-          res.data.products || []
-        );
+
+
+ useEffect(()=>{
+
+
+  fetchProducts();
+
+
+ },[]);
+
+
+
+
+
+
+ const fetchProducts =
+ async()=>{
+
+
+  try{
+
+
+   const res =
+   await API.get(
+    "/products"
+   );
+
+
+
+   setProducts(
+
+    res.data.products
+    ||
+    []
+
+   );
+
+
+  }
+  catch(error){
+
+
+   console.log(
+    error
+   );
+
+
+  }
+  finally{
+
+
+   setLoading(
+    false
+   );
+
+
+  }
+
+
+ };
+
+
+
+
+
+
+
+ return(
+
+
+ <div className="products-page">
+
+
+
+  <div className="page-heading">
+
+
+   <h1>
+
+    Latest Electronics
+
+   </h1>
+
+
+
+   <p>
+
+    Explore our best products and smart deals
+
+   </p>
+
+
+  </div>
+
+
+
+
+
+
+
+
+  {
+
+   loading
+
+   ?
+
+   <h2>
+    Loading Products...
+   </h2>
+
+
+   :
+
+
+
+
+  <div className="product-grid">
+
+
+
+   {
+
+
+   products.map(
+
+    (product)=>(
+
+
+
+
+    <div
+
+     className="product-card"
+
+     key={
+      product._id
+     }
+
+    >
+
+
+
+
+     <div className="product-img-box">
+
+
+
+      {
+
+       product.images
+       &&
+       product.images.length > 0
+
+
+       ?
+
+
+       <img
+
+        src={
+         product.images[0].url
+        }
+
+        alt={
+         product.name
+        }
+
+       />
+
+
+
+       :
+
+
+
+       <img
+
+        src=
+        "https://via.placeholder.com/300"
+
+        alt="product"
+
+       />
+
 
       }
-      catch(error){
 
-        console.log(error);
 
-      }
 
-    };
 
-  return (
+     </div>
 
-    <div className="container">
 
-      <h1>
-        Products
-      </h1>
 
-      <div className="product-grid">
 
-        {products.map(
-          (product) => (
 
-            <div
-              className="product-card"
-              key={product._id}
-            >
 
-              {
-                product.images &&
-                product.images.length > 0
-                ? (
-                  <img
-                    src={product.images[0].url}
-                    alt={product.name}
-                  />
-                )
-                : (
-                  <img
-                    src="https://via.placeholder.com/300"
-                    alt="product"
-                  />
-                )
-              }
 
-              <h3>
-                {product.name}
-              </h3>
+     <div className="product-info">
 
-              <p>
-                {product.category}
-              </p>
 
-              <p className="price">
-                ₹{product.price}
-              </p>
 
-              <p>
-                Stock: {product.stock}
-              </p>
+      <h3>
 
-            </div>
+       {
+        product.name
+       }
 
-          )
-        )}
+      </h3>
 
-      </div>
+
+
+
+      <p className="category">
+
+       {
+        product.category
+       }
+
+      </p>
+
+
+
+
+
+      <p className="price">
+
+       ₹
+       {
+        product.price
+       }
+
+      </p>
+
+
+
+
+
+      <p
+       className={
+        product.stock > 0
+        ?
+        "stock"
+        :
+        "out-stock"
+       }
+      >
+
+
+       {
+
+        product.stock > 0
+
+        ?
+
+        `In Stock (${product.stock})`
+
+        :
+
+        "Out Of Stock"
+
+
+       }
+
+
+
+      </p>
+
+
+
+
+
+
+
+      <button className="cart-btn">
+
+
+       Add To Cart
+
+
+      </button>
+
+
+
+
+     </div>
+
+
+
+
 
     </div>
 
-  );
+
+
+
+    )
+
+   )
+
+
+   }
+
+
+
+  </div>
+
+
+  }
+
+
+
+
+ </div>
+
+
+ );
+
 
 };
+
+
 
 export default Products;
