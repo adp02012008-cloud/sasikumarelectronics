@@ -15,6 +15,11 @@ const Checkout = () => {
  const navigate =
  useNavigate();
 
+ const user =
+ JSON.parse(
+  localStorage.getItem("user")
+ );
+
  const [
   cart,
   setCart
@@ -40,20 +45,9 @@ const Checkout = () => {
 
   try{
 
-   const token =
-   localStorage.getItem(
-    "token"
-   );
-
    const res =
    await API.get(
-    "/cart",
-    {
-     headers:{
-      Authorization:
-      `Bearer ${token}`
-     }
-    }
+    `/cart/${user._id}`
    );
 
    setCart(
@@ -97,23 +91,12 @@ const Checkout = () => {
 
    setLoading(true);
 
-   const token =
-   localStorage.getItem(
-    "token"
-   );
-
    const {data} =
    await API.post(
     "/payment/create-order",
     {
      amount:
      total
-    },
-    {
-     headers:{
-      Authorization:
-      `Bearer ${token}`
-     }
     }
    );
 
@@ -145,9 +128,7 @@ const Checkout = () => {
       "/orders",
       {
        user:
-       JSON.parse(
-        localStorage.getItem("user")
-       ).id,
+       user._id,
 
        orderItems:
        cart.map(
@@ -184,12 +165,6 @@ const Checkout = () => {
 
        totalPrice:
        total
-      },
-      {
-       headers:{
-        Authorization:
-        `Bearer ${token}`
-       }
       }
      );
 
