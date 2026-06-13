@@ -27,8 +27,8 @@ const mongoSanitize =
 require("express-mongo-sanitize");
 
 
-const xss =
-require("xss-clean");
+// const xss =
+// require("xss-clean");
 
 
 const compression =
@@ -126,9 +126,9 @@ app.use(
 
 
 
-app.use(
- xss()
-);
+// app.use(
+//  xss()
+// );
 
 
 
