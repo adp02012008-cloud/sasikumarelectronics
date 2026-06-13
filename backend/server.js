@@ -23,8 +23,8 @@ const rateLimit =
 require("express-rate-limit");
 
 
-const mongoSanitize =
-require("express-mongo-sanitize");
+// const mongoSanitize =
+// require("express-mongo-sanitize");
 
 
 // const xss =
@@ -120,9 +120,9 @@ app.use(
 
 
 
-app.use(
- mongoSanitize()
-);
+// app.use(
+//  mongoSanitize()
+// );
 
 
 
