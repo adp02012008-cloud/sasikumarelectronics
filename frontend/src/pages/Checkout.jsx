@@ -20,6 +20,10 @@ const Checkout = () => {
   localStorage.getItem("user")
  );
 
+ const userId =
+ user?._id ||
+ user?.id;
+
  const [
   cart,
   setCart
@@ -45,9 +49,13 @@ const Checkout = () => {
 
   try{
 
+   if(!userId){
+    return;
+   }
+
    const res =
    await API.get(
-    `/cart/${user._id}`
+    `/cart/${userId}`
    );
 
    setCart(
@@ -128,7 +136,7 @@ const Checkout = () => {
       "/orders",
       {
        user:
-       user._id,
+       userId,
 
        orderItems:
        cart.map(

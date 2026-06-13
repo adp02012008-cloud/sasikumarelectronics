@@ -20,6 +20,10 @@ const Cart = () => {
   localStorage.getItem("user")
  );
 
+ const userId =
+ user?._id ||
+ user?.id;
+
  useEffect(()=>{
 
   fetchCart();
@@ -32,9 +36,13 @@ const Cart = () => {
 
   try{
 
+   if(!userId){
+    return;
+   }
+
    const res =
    await API.get(
-    `/cart/${user._id}`
+    `/cart/${userId}`
    );
 
    setCart(
@@ -57,7 +65,7 @@ const Cart = () => {
   try{
 
    await API.delete(
-    `/cart/${user._id}/${id}`
+    `/cart/${userId}/${id}`
    );
 
    fetchCart();

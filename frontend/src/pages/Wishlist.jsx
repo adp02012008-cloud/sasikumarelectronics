@@ -17,6 +17,10 @@ const Wishlist = () => {
   localStorage.getItem("user")
  );
 
+ const userId =
+ user?._id ||
+ user?.id;
+
  useEffect(()=>{
 
   fetchWishlist();
@@ -29,9 +33,13 @@ const Wishlist = () => {
 
   try{
 
+   if(!userId){
+    return;
+   }
+
    const res =
    await API.get(
-    `/wishlist/${user._id}`
+    `/wishlist/${userId}`
    );
 
    setWishlist(
@@ -54,7 +62,7 @@ const Wishlist = () => {
   try{
 
    await API.delete(
-    `/wishlist/${user._id}/${id}`
+    `/wishlist/${userId}/${id}`
    );
 
    fetchWishlist();
