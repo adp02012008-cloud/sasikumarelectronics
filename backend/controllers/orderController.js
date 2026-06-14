@@ -14,14 +14,14 @@ const formatItems = (order) => {
     .join("");
 };
 
-const addressHtml = (address) => {
+const addressHtml = (address = {}) => {
   return `
-    <p><b>Name:</b> ${address.fullName}</p>
-    <p><b>Phone:</b> ${address.phone}</p>
-    <p><b>Address:</b> ${address.address}</p>
-    <p><b>City:</b> ${address.city}</p>
-    <p><b>State:</b> ${address.state}</p>
-    <p><b>Pincode:</b> ${address.pincode}</p>
+    <p><b>Name:</b> ${address.fullName || "Customer"}</p>
+    <p><b>Phone:</b> ${address.phone || "Not Available"}</p>
+    <p><b>Address:</b> ${address.address || "Not Available"}</p>
+    <p><b>City:</b> ${address.city || "Not Available"}</p>
+    <p><b>State:</b> ${address.state || "Not Available"}</p>
+    <p><b>Pincode:</b> ${address.pincode || "Not Available"}</p>
     <p><b>Country:</b> ${address.country || "India"}</p>
   `;
 };
@@ -35,6 +35,12 @@ const safeSendEmail = async (options) => {
     return false;
   }
 };
+
+/*
+=========================
+CREATE ORDER
+=========================
+*/
 
 exports.createOrder = async (req, res) => {
   try {
@@ -181,6 +187,12 @@ exports.createOrder = async (req, res) => {
   }
 };
 
+/*
+=========================
+GET ALL ORDERS - ADMIN
+=========================
+*/
+
 exports.getOrders = async (req, res) => {
   try {
     const orders = await Order.find()
@@ -200,6 +212,12 @@ exports.getOrders = async (req, res) => {
     });
   }
 };
+
+/*
+=========================
+GET MY ORDERS - USER
+=========================
+*/
 
 exports.getMyOrders = async (req, res) => {
   try {
@@ -221,6 +239,12 @@ exports.getMyOrders = async (req, res) => {
     });
   }
 };
+
+/*
+=========================
+GET SINGLE ORDER
+=========================
+*/
 
 exports.getSingleOrder = async (req, res) => {
   try {
@@ -256,6 +280,12 @@ exports.getSingleOrder = async (req, res) => {
     });
   }
 };
+
+/*
+=========================
+DOWNLOAD INVOICE
+=========================
+*/
 
 exports.downloadInvoice = async (req, res) => {
   try {
@@ -300,43 +330,41 @@ exports.downloadInvoice = async (req, res) => {
   }
 };
 
+/*
+=========================
+UPDATE ORDER STATUS - ADMIN
+=========================
+*/
+
 exports.updateOrderStatus = async (req, res) => {
   try {
-    let order = await Order.findById(req.params.id)
+    const existingOrder = await Order.findById(req.params.id)
       .populate("user")
       .populate("orderItems.product");
 
-    if (!order) {
+    if (!existingOrder) {
       return res.status(404).json({
         success: false,
         message: "Order Not Found",
       });
     }
 
-    if (order.orderStatus === req.body.status) {
+    if (existingOrder.orderStatus === req.body.status) {
       return res.status(200).json({
         success: true,
         message: "Order already has this status",
-        order,
+        order: existingOrder,
       });
     }
 
-    order.orderStatus = req.body.status;
+    if (
+      req.body.status === "Cancelled" &&
+      existingOrder.orderStatus !== "Cancelled"
+    ) {
+      for (const item of existingOrder.orderItems) {
+        const productId = item.product?._id || item.product;
 
-    order.trackingTimeline.push({
-      status: req.body.status,
-      message:
-        req.body.message ||
-        `Order status updated to ${req.body.status}`,
-    });
-
-    if (req.body.status === "Delivered") {
-      order.deliveredAt = Date.now();
-    }
-
-    if (req.body.status === "Cancelled") {
-      for (const item of order.orderItems) {
-        const product = await Product.findById(item.product._id);
+        const product = await Product.findById(productId);
 
         if (product) {
           product.stock = product.stock + item.quantity;
@@ -345,18 +373,48 @@ exports.updateOrderStatus = async (req, res) => {
       }
     }
 
-    await order.save();
+    const updateData = {
+      orderStatus: req.body.status,
+    };
 
-    order = await Order.findById(order._id)
+    if (req.body.status === "Delivered") {
+      updateData.deliveredAt = Date.now();
+    }
+
+    let order = await Order.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: updateData,
+        $push: {
+          trackingTimeline: {
+            status: req.body.status,
+            message:
+              req.body.message ||
+              `Order status updated to ${req.body.status}`,
+            date: new Date(),
+          },
+        },
+      },
+      {
+        new: true,
+        runValidators: false,
+      }
+    )
       .populate("user")
       .populate("orderItems.product");
+
+    const customerName =
+      order.shippingAddress?.fullName ||
+      order.user?.name ||
+      "Customer";
 
     await safeSendEmail({
       to: order.user.email,
       subject: `Order Status Updated - ${order.orderStatus}`,
       html: `
         <h2>Order Status Updated</h2>
-        <p>Hello ${order.shippingAddress.fullName},</p>
+
+        <p>Hello ${customerName},</p>
 
         <p>Your Sasikumar Electronics order status has been updated.</p>
 
@@ -380,8 +438,8 @@ exports.updateOrderStatus = async (req, res) => {
         html: `
           <h2>Order Delivered</h2>
           <p><b>Order ID:</b> ${order._id}</p>
-          <p><b>Customer:</b> ${order.shippingAddress.fullName}</p>
-          <p><b>Phone:</b> ${order.shippingAddress.phone}</p>
+          <p><b>Customer:</b> ${customerName}</p>
+          <p><b>Phone:</b> ${order.shippingAddress?.phone || "Not Available"}</p>
           <p><b>Total:</b> ₹${order.totalPrice}</p>
         `,
       });
