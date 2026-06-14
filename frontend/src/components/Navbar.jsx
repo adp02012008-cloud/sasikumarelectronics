@@ -40,7 +40,6 @@ const Navbar = () => {
 
 
 
-
   <div className="nav-search">
 
    <input
@@ -56,13 +55,13 @@ const Navbar = () => {
 
 
 
-
   <div className="nav-user">
 
 
    {
-    user
-    ?
+
+    user ?
+
     <>
 
      <span>
@@ -73,12 +72,17 @@ const Navbar = () => {
      <button
       onClick={logout}
      >
+
       Logout
+
      </button>
+
 
     </>
 
+
     :
+
 
     <>
 
@@ -90,6 +94,7 @@ const Navbar = () => {
      <Link to="/register">
       Register
      </Link>
+
 
     </>
 
@@ -108,7 +113,6 @@ const Navbar = () => {
 
 
 
-
  <div className="category-navbar">
 
 
@@ -117,14 +121,19 @@ const Navbar = () => {
   </Link>
 
 
+
   <Link to="/products">
    Products
   </Link>
 
 
+
+
+
   {
    user &&
    <>
+
 
    <Link to="/wishlist">
     ❤️ Wishlist
@@ -136,27 +145,77 @@ const Navbar = () => {
    </Link>
 
 
+
    <Link to="/orders">
     Orders
    </Link>
 
 
    </>
-
   }
 
 
 
 
+
+
   {
-   user?.role==="admin"
+   user?.role === "admin"
    &&
+   <>
+
+
    <Link
     className="admin-link"
     to="/admin"
    >
-    Admin Panel
+
+    Dashboard
+
    </Link>
+
+
+
+
+
+   <Link
+    className="admin-link"
+    to="/admin/products"
+   >
+
+    Add Products
+
+   </Link>
+
+
+
+
+
+   <Link
+    className="admin-link"
+    to="/admin/orders"
+   >
+
+    Manage Orders
+
+   </Link>
+
+
+
+
+
+   <Link
+    className="admin-link"
+    to="/admin/users"
+   >
+
+    Users
+
+   </Link>
+
+
+
+   </>
   }
 
 
