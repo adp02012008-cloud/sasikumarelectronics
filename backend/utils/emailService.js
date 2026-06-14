@@ -1,27 +1,27 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "74.125.130.108",
   port: 587,
   secure: false,
   requireTLS: true,
-  family: 4,
 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 20000,
+  tls: {
+    servername: "smtp.gmail.com",
+    rejectUnauthorized: false,
+  },
+
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
 });
 
 const sendEmail = async (options) => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error("EMAIL_USER or EMAIL_PASS missing");
-  }
-
   const info = await transporter.sendMail({
     from: `"Sasikumar Electronics" <${process.env.EMAIL_USER}>`,
     to: options.to,
