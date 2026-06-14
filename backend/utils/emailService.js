@@ -1,36 +1,98 @@
-const nodemailer = require("nodemailer");
+const nodemailer =
+require("nodemailer");
 
-const transporter = nodemailer.createTransport({
-  host: "74.125.130.108",
-  port: 587,
-  secure: false,
-  requireTLS: true,
 
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
+const transporter =
+nodemailer.createTransport({
 
-  tls: {
-    servername: "smtp.gmail.com",
-    rejectUnauthorized: false,
-  },
+ host:
+ process.env.EMAIL_HOST,
 
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
+ port:
+ 587,
+
+ secure:
+ false,
+
+ requireTLS:
+ true,
+
+ connectionTimeout:
+ 30000,
+
+ greetingTimeout:
+ 30000,
+
+
+ auth:{
+
+  user:
+  process.env.EMAIL_USER,
+
+
+  pass:
+  process.env.EMAIL_PASS
+
+ }
+
 });
 
-const sendEmail = async (options) => {
-  const info = await transporter.sendMail({
-    from: `"Sasikumar Electronics" <${process.env.EMAIL_USER}>`,
-    to: options.to,
-    subject: options.subject,
-    html: options.html,
+
+
+
+const sendEmail =
+async(options)=>{
+
+
+ try{
+
+
+  let info =
+  await transporter.sendMail({
+
+
+   from:
+   `"Sasikumar Electronics" <${process.env.EMAIL_USER}>`,
+
+
+   to:
+   options.to,
+
+
+   subject:
+   options.subject,
+
+
+   html:
+   options.html
+
+
   });
 
-  console.log("Email Sent:", info.messageId);
-  return info;
+
+
+  console.log(
+   "Email Sent:",
+   info.messageId
+  );
+
+
+
+ }
+ catch(error){
+
+
+  console.log(
+   "EMAIL FULL ERROR:",
+   error
+  );
+
+
+ }
+
+
 };
 
-module.exports = sendEmail;
+
+module.exports =
+sendEmail;
