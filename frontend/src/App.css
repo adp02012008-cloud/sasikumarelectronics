@@ -1052,3 +1052,40 @@ td{
   flex-direction:column;
  }
 }
+
+.google-btn{
+ width:100%;
+ height:46px;
+ border:1px solid #d1d5db;
+ border-radius:12px;
+ background:white;
+ color:#111827;
+ font-weight:900;
+ margin-bottom:16px;
+}
+
+.google-btn:hover{
+ background:#f8fafc;
+ border-color:#2563eb;
+}
+
+.or-line{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ margin:6px 0 18px;
+ color:#6b7280;
+}
+
+.or-line::before,
+.or-line::after{
+ content:"";
+ flex:1;
+ height:1px;
+ background:#e5e7eb;
+}
+
+.or-line span{
+ font-size:14px;
+ font-weight:800;
+}
