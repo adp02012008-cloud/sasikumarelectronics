@@ -39,7 +39,8 @@ const Checkout = () => {
   };
 
   const total = cart.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
+    (sum, item) =>
+      sum + item.product.price * item.quantity,
     0
   );
 
@@ -57,7 +58,7 @@ const Checkout = () => {
     }
 
     if (address.phone.length < 10) {
-      alert("Enter valid WhatsApp phone number");
+      alert("Enter valid phone number");
       return false;
     }
 
@@ -90,35 +91,50 @@ const Checkout = () => {
         order_id: data.order.id,
 
         handler: async function (response) {
-          await API.post("/payment/verify", {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
+          try {
+            await API.post("/payment/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
 
-          await API.post("/orders", {
-            orderItems: cart.map((item) => ({
-              product: item.product._id,
-              quantity: item.quantity,
-              price: item.product.price,
-            })),
+            await API.post("/orders", {
+              orderItems: cart.map((item) => ({
+                product: item.product._id,
+                quantity: item.quantity,
+                price: item.product.price,
+              })),
 
-            shippingAddress: address,
+              shippingAddress: address,
+              paymentMethod: "Razorpay",
 
-            paymentMethod: "Razorpay",
+              paymentInfo: {
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+              },
 
-            paymentInfo: {
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-            },
+              totalPrice: total,
+            });
 
-            totalPrice: total,
-          });
+            await API.delete("/cart/clear");
 
-          await API.delete("/cart/clear");
+            alert("Payment successful. Order placed.");
+            navigate("/orders");
+          } catch (error) {
+            console.log(error);
+            alert(
+              error.response?.data?.message ||
+              "Payment completed, but order creation failed. Please contact admin."
+            );
+          } finally {
+            setLoading(false);
+          }
+        },
 
-          alert("Payment Successful. Order Placed.");
-          navigate("/orders");
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          },
         },
 
         prefill: {
@@ -136,7 +152,6 @@ const Checkout = () => {
     } catch (error) {
       console.log(error);
       alert(error.response?.data?.message || "Payment Failed");
-    } finally {
       setLoading(false);
     }
   };
@@ -164,7 +179,7 @@ const Checkout = () => {
 
                 <input
                   name="phone"
-                  placeholder="WhatsApp Phone Number"
+                  placeholder="Phone Number"
                   value={address.phone}
                   onChange={handleAddressChange}
                 />

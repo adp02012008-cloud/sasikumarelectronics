@@ -1,7 +1,6 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const sendEmail = require("../utils/emailService");
-const sendWhatsApp = require("../utils/whatsappService");
 const generateInvoice = require("../utils/invoiceGenerator");
 const fs = require("fs");
 const path = require("path");
@@ -10,7 +9,7 @@ const formatItems = (order) => {
   return order.orderItems
     .map(
       (item) =>
-        `<li>${item.product?.name || item.product} × ${item.quantity} - ₹${item.price}</li>`
+        `<li>${item.product?.name || "Product"} × ${item.quantity} - ₹${item.price}</li>`
     )
     .join("");
 };
@@ -23,8 +22,18 @@ const addressHtml = (address) => {
     <p><b>City:</b> ${address.city}</p>
     <p><b>State:</b> ${address.state}</p>
     <p><b>Pincode:</b> ${address.pincode}</p>
-    <p><b>Country:</b> ${address.country}</p>
+    <p><b>Country:</b> ${address.country || "India"}</p>
   `;
+};
+
+const safeSendEmail = async (options) => {
+  try {
+    await sendEmail(options);
+    return true;
+  } catch (error) {
+    console.log("Email Error:", error.message);
+    return false;
+  }
 };
 
 exports.createOrder = async (req, res) => {
@@ -108,83 +117,63 @@ exports.createOrder = async (req, res) => {
 
     const invoicePath = generateInvoice(order);
 
-    const customerEmailHtml = `
-      <h2>Order Confirmed 🎉</h2>
-      <p>Hello ${shippingAddress.fullName},</p>
-      <p>Your order has been placed successfully.</p>
-
-      <h3>Order Details</h3>
-      <p><b>Order ID:</b> ${order._id}</p>
-      <p><b>Total Amount:</b> ₹${order.totalPrice}</p>
-      <p><b>Payment ID:</b> ${order.paymentInfo?.razorpayPaymentId || "N/A"}</p>
-
-      <h3>Products</h3>
-      <ul>${formatItems(order)}</ul>
-
-      <h3>Delivery Address</h3>
-      ${addressHtml(order.shippingAddress)}
-
-      <p>We will update you when your order is packed and shipped.</p>
-      <p>Thank you for shopping with Sasikumar Electronics.</p>
-    `;
-
-    await sendEmail({
+    await safeSendEmail({
       to: req.user.email,
       subject: "Your Sasikumar Electronics Order Confirmed",
-      html: customerEmailHtml,
+      html: `
+        <h2>Order Confirmed</h2>
+        <p>Hello ${order.shippingAddress.fullName},</p>
+        <p>Your order has been placed successfully.</p>
+
+        <h3>Order Details</h3>
+        <p><b>Order ID:</b> ${order._id}</p>
+        <p><b>Total Amount:</b> ₹${order.totalPrice}</p>
+        <p><b>Payment ID:</b> ${order.paymentInfo?.razorpayPaymentId || "N/A"}</p>
+
+        <h3>Products</h3>
+        <ul>${formatItems(order)}</ul>
+
+        <h3>Delivery Address</h3>
+        ${addressHtml(order.shippingAddress)}
+
+        <p>Thank you for shopping with Sasikumar Electronics.</p>
+      `,
     });
 
-    const adminEmailHtml = `
-      <h2>New Order Received 🚨</h2>
-
-      <h3>Customer Details</h3>
-      <p><b>Name:</b> ${shippingAddress.fullName}</p>
-      <p><b>Email:</b> ${req.user.email}</p>
-      <p><b>Phone:</b> ${shippingAddress.phone}</p>
-
-      <h3>Order Details</h3>
-      <p><b>Order ID:</b> ${order._id}</p>
-      <p><b>Total Amount:</b> ₹${order.totalPrice}</p>
-      <p><b>Payment Method:</b> ${order.paymentMethod}</p>
-      <p><b>Payment ID:</b> ${order.paymentInfo?.razorpayPaymentId || "N/A"}</p>
-
-      <h3>Products</h3>
-      <ul>${formatItems(order)}</ul>
-
-      <h3>Delivery Address</h3>
-      ${addressHtml(order.shippingAddress)}
-    `;
-
-    await sendEmail({
+    await safeSendEmail({
       to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
       subject: "New Order Received - Sasikumar Electronics",
-      html: adminEmailHtml,
-    });
+      html: `
+        <h2>New Order Received</h2>
 
-    await sendWhatsApp({
-      phone: order.shippingAddress.phone,
-      orderId: order._id,
-      amount: order.totalPrice,
-      status: "Processing",
-    });
+        <h3>Customer Details</h3>
+        <p><b>Name:</b> ${order.shippingAddress.fullName}</p>
+        <p><b>Email:</b> ${req.user.email}</p>
+        <p><b>Phone:</b> ${order.shippingAddress.phone}</p>
 
-    if (process.env.ADMIN_PHONE) {
-      await sendWhatsApp({
-        phone: process.env.ADMIN_PHONE,
-        orderId: order._id,
-        amount: order.totalPrice,
-        status: "New Order",
-      });
-    }
+        <h3>Order Details</h3>
+        <p><b>Order ID:</b> ${order._id}</p>
+        <p><b>Total Amount:</b> ₹${order.totalPrice}</p>
+        <p><b>Payment Method:</b> ${order.paymentMethod}</p>
+        <p><b>Payment ID:</b> ${order.paymentInfo?.razorpayPaymentId || "N/A"}</p>
+
+        <h3>Products</h3>
+        <ul>${formatItems(order)}</ul>
+
+        <h3>Delivery Address</h3>
+        ${addressHtml(order.shippingAddress)}
+      `,
+    });
 
     res.status(201).json({
       success: true,
-      message:
-        "Order created successfully. Customer email, admin email and WhatsApp notifications sent.",
+      message: "Order created successfully",
       invoicePath,
       order,
     });
   } catch (error) {
+    console.log("Create Order Error:", error.message);
+
     res.status(500).json({
       success: false,
       message: error.message,
@@ -324,6 +313,14 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
+    if (order.orderStatus === req.body.status) {
+      return res.status(200).json({
+        success: true,
+        message: "Order already has this status",
+        order,
+      });
+    }
+
     order.orderStatus = req.body.status;
 
     order.trackingTimeline.push({
@@ -350,43 +347,54 @@ exports.updateOrderStatus = async (req, res) => {
 
     await order.save();
 
-    const statusEmailHtml = `
-      <h2>Order Status Updated</h2>
-      <p>Hello ${order.shippingAddress.fullName},</p>
-      <p>Your order status has been updated.</p>
+    order = await Order.findById(order._id)
+      .populate("user")
+      .populate("orderItems.product");
 
-      <p><b>Order ID:</b> ${order._id}</p>
-      <p><b>New Status:</b> ${order.orderStatus}</p>
-      <p><b>Message:</b> ${
-        req.body.message || `Order status updated to ${req.body.status}`
-      }</p>
-
-      <h3>Products</h3>
-      <ul>${formatItems(order)}</ul>
-
-      <p>Thank you for shopping with Sasikumar Electronics.</p>
-    `;
-
-    await sendEmail({
+    await safeSendEmail({
       to: order.user.email,
       subject: `Order Status Updated - ${order.orderStatus}`,
-      html: statusEmailHtml,
+      html: `
+        <h2>Order Status Updated</h2>
+        <p>Hello ${order.shippingAddress.fullName},</p>
+
+        <p>Your Sasikumar Electronics order status has been updated.</p>
+
+        <p><b>Order ID:</b> ${order._id}</p>
+        <p><b>New Status:</b> ${order.orderStatus}</p>
+        <p><b>Message:</b> ${
+          req.body.message || `Order status updated to ${req.body.status}`
+        }</p>
+
+        <h3>Products</h3>
+        <ul>${formatItems(order)}</ul>
+
+        <p>Thank you for shopping with Sasikumar Electronics.</p>
+      `,
     });
 
-    await sendWhatsApp({
-      phone: order.shippingAddress.phone,
-      orderId: order._id,
-      amount: order.totalPrice,
-      status: order.orderStatus,
-    });
+    if (req.body.status === "Delivered") {
+      await safeSendEmail({
+        to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+        subject: "Order Delivered - Sasikumar Electronics",
+        html: `
+          <h2>Order Delivered</h2>
+          <p><b>Order ID:</b> ${order._id}</p>
+          <p><b>Customer:</b> ${order.shippingAddress.fullName}</p>
+          <p><b>Phone:</b> ${order.shippingAddress.phone}</p>
+          <p><b>Total:</b> ₹${order.totalPrice}</p>
+        `,
+      });
+    }
 
     res.status(200).json({
       success: true,
-      message:
-        "Order status updated. Customer email and WhatsApp sent.",
+      message: "Order status updated successfully",
       order,
     });
   } catch (error) {
+    console.log("Update Status Error:", error.message);
+
     res.status(500).json({
       success: false,
       message: error.message,

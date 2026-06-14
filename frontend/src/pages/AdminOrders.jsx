@@ -31,13 +31,18 @@ const AdminOrders = () => {
     try {
       setUpdating(orderId);
 
-      await API.put(`/orders/status/${orderId}`, {
+      const res = await API.put(`/orders/status/${orderId}`, {
         status,
         message: `Your order is now ${status}`,
       });
 
-      alert("Order status updated. Email and WhatsApp sent.");
-      fetchOrders();
+      setOrders((prev) =>
+        prev.map((order) =>
+          order._id === orderId ? res.data.order : order
+        )
+      );
+
+      alert("Order status updated. Email notification sent.");
     } catch (error) {
       alert(error.response?.data?.message || "Status update failed");
     } finally {
@@ -108,7 +113,7 @@ const AdminOrders = () => {
                   disabled={updating === order._id || order.orderStatus === status}
                   onClick={() => updateStatus(order._id, status)}
                 >
-                  {status}
+                  {updating === order._id ? "Updating..." : status}
                 </button>
               ))}
             </div>
