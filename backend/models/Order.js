@@ -1,12 +1,9 @@
-const mongoose =
-require("mongoose");
+const mongoose = require("mongoose");
 
-const orderSchema =
-new mongoose.Schema(
+const orderSchema = new mongoose.Schema(
   {
     user: {
-      type:
-        mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -14,16 +11,13 @@ new mongoose.Schema(
     orderItems: [
       {
         product: {
-          type:
-            mongoose.Schema.Types.ObjectId,
+          type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
         },
-
         quantity: {
           type: Number,
           required: true,
         },
-
         price: {
           type: Number,
           required: true,
@@ -32,12 +26,34 @@ new mongoose.Schema(
     ],
 
     shippingAddress: {
-      address: String,
-      city: String,
-      state: String,
-      pincode: String,
-      country: String,
-      phone: String,
+      fullName: {
+        type: String,
+        required: true,
+      },
+      phone: {
+        type: String,
+        required: true,
+      },
+      address: {
+        type: String,
+        required: true,
+      },
+      city: {
+        type: String,
+        required: true,
+      },
+      state: {
+        type: String,
+        required: true,
+      },
+      pincode: {
+        type: String,
+        required: true,
+      },
+      country: {
+        type: String,
+        default: "India",
+      },
     },
 
     paymentMethod: {
@@ -46,11 +62,8 @@ new mongoose.Schema(
     },
 
     paymentInfo: {
-
       razorpayOrderId: String,
-
       razorpayPaymentId: String,
-
     },
 
     totalPrice: {
@@ -73,14 +86,8 @@ new mongoose.Schema(
 
     trackingTimeline: [
       {
-        status: {
-          type: String,
-        },
-
-        message: {
-          type: String,
-        },
-
+        status: String,
+        message: String,
         date: {
           type: Date,
           default: Date.now,
@@ -89,7 +96,6 @@ new mongoose.Schema(
     ],
 
     paidAt: Date,
-
     deliveredAt: Date,
   },
   {
@@ -97,8 +103,4 @@ new mongoose.Schema(
   }
 );
 
-module.exports =
-mongoose.model(
-  "Order",
-  orderSchema
-);
+module.exports = mongoose.model("Order", orderSchema);
