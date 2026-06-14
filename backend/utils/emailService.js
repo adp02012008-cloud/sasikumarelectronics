@@ -1,41 +1,87 @@
 const nodemailer =
 require("nodemailer");
 
+
 const transporter =
 nodemailer.createTransport({
-  service:"gmail",
 
-  auth:{
-    user:
-    process.env.EMAIL_USER,
+ host:"smtp.gmail.com",
 
-    pass:
-    process.env.EMAIL_PASS
-  }
+ port:587,
+
+ secure:false,
+
+
+ auth:{
+
+  user:
+  process.env.EMAIL_USER,
+
+
+  pass:
+  process.env.EMAIL_PASS
+
+ },
+
+
+ tls:{
+
+  rejectUnauthorized:false
+
+ }
+
 });
+
+
 
 const sendEmail =
 async(options)=>{
 
-  const mailOptions = {
-    from:
-    process.env.EMAIL_USER,
 
-    to:
-    options.to,
+ try{
 
-    subject:
-    options.subject,
 
-    html:
-    options.html
-  };
+  const info =
+  await transporter.sendMail({
 
-  await transporter.sendMail(
-    mailOptions
+   from:
+   `"Sasikumar Electronics" <${process.env.EMAIL_USER}>`,
+
+   to:
+   options.to,
+
+   subject:
+   options.subject,
+
+   html:
+   options.html
+
+  });
+
+
+
+  console.log(
+   "Email Sent:",
+   info.messageId
   );
 
+
+ }
+ catch(error){
+
+
+  console.log(
+   "Email Error:",
+   error.message
+  );
+
+
+ }
+
+
 };
+
+
 
 module.exports =
 sendEmail;
