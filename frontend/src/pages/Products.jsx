@@ -3,164 +3,130 @@ import {
  useState,
 } from "react";
 
-import API
-from "../api/axios";
+import API from "../api/axios";
 
 import {
  useNavigate,
 } from "react-router-dom";
 
-
 const Products = () => {
-
- const [
-  products,
-  setProducts
- ] =
+ const [products, setProducts] =
  useState([]);
 
- const [
-  loading,
-  setLoading
- ] =
+ const [loading, setLoading] =
  useState(true);
 
  const navigate =
  useNavigate();
 
-
- useEffect(()=>{
-
+ useEffect(() => {
   fetchProducts();
+ }, []);
 
- },[]);
-
-
- const fetchProducts =
- async()=>{
-
-  try{
-
+ const fetchProducts = async () => {
+  try {
    const res =
-   await API.get(
-    "/products"
-   );
+   await API.get("/products");
 
    setProducts(
     res.data.products || []
    );
-
-  }
-  catch(error){
-
+  } catch (error) {
    console.log(error);
-
-  }
-  finally{
-
+  } finally {
    setLoading(false);
-
   }
-
  };
 
-
- const addToCart =
- async(productId)=>{
-
-  try{
-
+ const addToCart = async (productId) => {
+  try {
    const user =
    JSON.parse(
     localStorage.getItem("user")
    );
 
-   if(!user){
-
-    alert(
-     "Please login first"
-    );
-
-    navigate(
-     "/login"
-    );
-
+   if (!user) {
+    alert("Please login first");
+    navigate("/login");
     return;
-
    }
-
-   const userId =
-   user?._id ||
-   user?.id;
 
    await API.post(
     "/cart/add",
     {
-     userId,
      productId,
-     quantity:1,
+     quantity: 1,
     }
    );
 
-   alert(
-    "Product added to cart"
-   );
-
-   navigate(
-    "/cart"
-   );
-
-  }
-  catch(error){
-
+   alert("Product added to cart");
+   navigate("/cart");
+  } catch (error) {
    console.log(error);
 
    alert(
     error.response?.data?.message ||
     "Failed to add product to cart"
    );
-
   }
-
  };
 
+ const addToWishlist = async (productId) => {
+  try {
+   const user =
+   JSON.parse(
+    localStorage.getItem("user")
+   );
 
- return(
+   if (!user) {
+    alert("Please login first");
+    navigate("/login");
+    return;
+   }
 
+   await API.post(
+    "/wishlist/add",
+    {
+     productId,
+    }
+   );
+
+   alert("Product added to wishlist");
+   navigate("/wishlist");
+  } catch (error) {
+   console.log(error);
+
+   alert(
+    error.response?.data?.message ||
+    "Failed to add product to wishlist"
+   );
+  }
+ };
+
+ return (
   <div className="products-page">
-
    <div className="page-heading">
-
-    <h1>
-     Latest Electronics
-    </h1>
+    <h1>Latest Electronics</h1>
 
     <p>
      Explore our best products and smart deals
     </p>
-
    </div>
 
    {
     loading
     ?
-    <h2>
-     Loading Products...
-    </h2>
+    <h2>Loading Products...</h2>
     :
     <div className="product-grid">
-
      {
       products.map(
-       (product)=>(
-
+       product => (
         <div
          className="product-card"
          key={product._id}
         >
-
          <div className="product-img-box">
-
           {
            product.images &&
            product.images.length > 0
@@ -175,14 +141,10 @@ const Products = () => {
             alt="product"
            />
           }
-
          </div>
 
          <div className="product-info">
-
-          <h3>
-           {product.name}
-          </h3>
+          <h3>{product.name}</h3>
 
           <p className="category">
            {product.category}
@@ -213,30 +175,34 @@ const Products = () => {
           <button
            className="cart-btn"
            disabled={product.stock <= 0}
-           onClick={()=>
-            addToCart(
-             product._id
-            )
+           onClick={() =>
+            addToCart(product._id)
            }
           >
            Add To Cart
           </button>
 
+          <button
+           className="cart-btn"
+           style={{
+            marginTop: "8px",
+            background: "#2874f0",
+           }}
+           onClick={() =>
+            addToWishlist(product._id)
+           }
+          >
+           Add To Wishlist
+          </button>
          </div>
-
         </div>
-
        )
       )
      }
-
     </div>
    }
-
   </div>
-
  );
-
 };
 
 export default Products;
