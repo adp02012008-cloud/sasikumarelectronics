@@ -1,98 +1,32 @@
-const nodemailer =
-require("nodemailer");
+const axios = require("axios");
 
-
-const transporter =
-nodemailer.createTransport({
-
- host:
- process.env.EMAIL_HOST,
-
- port:
- 587,
-
- secure:
- false,
-
- requireTLS:
- true,
-
- connectionTimeout:
- 30000,
-
- greetingTimeout:
- 30000,
-
-
- auth:{
-
-  user:
-  process.env.EMAIL_USER,
-
-
-  pass:
-  process.env.EMAIL_PASS
-
- }
-
-});
-
-
-
-
-const sendEmail =
-async(options)=>{
-
-
- try{
-
-
-  let info =
-  await transporter.sendMail({
-
-
-   from:
-   `"Sasikumar Electronics" <${process.env.EMAIL_USER}>`,
-
-
-   to:
-   options.to,
-
-
-   subject:
-   options.subject,
-
-
-   html:
-   options.html
-
-
-  });
-
-
-
-  console.log(
-   "Email Sent:",
-   info.messageId
+const sendEmail = async (options) => {
+  const response = await axios.post(
+    "https://api.brevo.com/v3/smtp/email",
+    {
+      sender: {
+        name: "Sasikumar Electronics",
+        email: process.env.EMAIL_FROM,
+      },
+      to: [
+        {
+          email: options.to,
+        },
+      ],
+      subject: options.subject,
+      htmlContent: options.html,
+    },
+    {
+      headers: {
+        accept: "application/json",
+        "api-key": process.env.BREVO_API_KEY,
+        "content-type": "application/json",
+      },
+    }
   );
 
-
-
- }
- catch(error){
-
-
-  console.log(
-   "EMAIL FULL ERROR:",
-   error
-  );
-
-
- }
-
-
+  console.log("Email Sent:", response.data);
+  return response.data;
 };
 
-
-module.exports =
-sendEmail;
+module.exports = sendEmail;
