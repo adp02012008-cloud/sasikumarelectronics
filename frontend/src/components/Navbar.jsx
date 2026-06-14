@@ -1,130 +1,175 @@
 import {
- Link,
+ Link
 } from "react-router-dom";
 
 import {
- useContext,
+ useContext
 } from "react";
 
 import {
- AuthContext,
+ AuthContext
 } from "../context/AuthContext";
 
 
 const Navbar = () => {
 
+
  const {
   user,
-  logout,
+  logout
  } =
  useContext(
   AuthContext
  );
 
+
  return (
 
-  <>
+ <>
 
-   <div className="top-navbar">
+ <nav className="main-navbar">
 
-    <div className="brand">
-     <Link to="/">
-      Sasikumar Electronics
-     </Link>
-    </div>
 
-    <div className="search-box">
-     <input
-      type="text"
-      placeholder="Search for mobiles, laptops, accessories..."
-     />
-     <button>
-      Search
+  <div className="nav-logo">
+
+   <Link to="/">
+    ⚡ Sasikumar Electronics
+   </Link>
+
+  </div>
+
+
+
+
+  <div className="nav-search">
+
+   <input
+    placeholder="Search mobiles, laptops, accessories..."
+   />
+
+   <button>
+    Search
+   </button>
+
+  </div>
+
+
+
+
+
+  <div className="nav-user">
+
+
+   {
+    user
+    ?
+    <>
+
+     <span>
+      👋 {user.name}
+     </span>
+
+
+     <button
+      onClick={logout}
+     >
+      Logout
      </button>
-    </div>
 
-    <div className="nav-actions">
+    </>
 
-     {!user ? (
-      <>
-       <Link to="/login">
-        Login
-       </Link>
+    :
 
-       <Link to="/register">
-        Register
-       </Link>
-      </>
-     ) : (
-      <>
-       <span>
-        Hi, {user.name}
-       </span>
+    <>
 
-       <button
-        onClick={logout}
-       >
-        Logout
-       </button>
-      </>
-     )}
+     <Link to="/login">
+      Login
+     </Link>
 
-    </div>
 
-   </div>
+     <Link to="/register">
+      Register
+     </Link>
 
-   <div className="bottom-navbar">
+    </>
 
-    <Link to="/">
-     Home
-    </Link>
+   }
 
-    <Link to="/products">
-     Products
-    </Link>
 
-    {user && (
-     <>
-      <Link to="/wishlist">
-       Wishlist
-      </Link>
+  </div>
 
-      <Link to="/cart">
-       Cart
-      </Link>
 
-      <Link to="/orders">
-       Orders
-      </Link>
-     </>
-    )}
 
-    {user?.role === "admin" && (
-     <>
-      <Link to="/admin">
-       Dashboard
-      </Link>
+ </nav>
 
-      <Link to="/admin/products">
-       Manage Products
-      </Link>
 
-      <Link to="/admin/orders">
-       Manage Orders
-      </Link>
 
-      <Link to="/admin/users">
-       Users
-      </Link>
-     </>
-    )}
 
-   </div>
 
-  </>
+
+
+
+ <div className="category-navbar">
+
+
+  <Link to="/">
+   Home
+  </Link>
+
+
+  <Link to="/products">
+   Products
+  </Link>
+
+
+  {
+   user &&
+   <>
+
+   <Link to="/wishlist">
+    ❤️ Wishlist
+   </Link>
+
+
+   <Link to="/cart">
+    🛒 Cart
+   </Link>
+
+
+   <Link to="/orders">
+    Orders
+   </Link>
+
+
+   </>
+
+  }
+
+
+
+
+  {
+   user?.role==="admin"
+   &&
+   <Link
+    className="admin-link"
+    to="/admin"
+   >
+    Admin Panel
+   </Link>
+  }
+
+
+
+ </div>
+
+
+ </>
 
  );
 
+
 };
+
 
 export default Navbar;

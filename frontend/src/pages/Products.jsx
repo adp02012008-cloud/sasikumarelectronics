@@ -10,14 +10,11 @@ import {
 } from "react-router-dom";
 
 const Products = () => {
- const [products, setProducts] =
- useState([]);
+ const [products, setProducts] = useState([]);
+ const [loading, setLoading] = useState(true);
+ const [keyword, setKeyword] = useState("");
 
- const [loading, setLoading] =
- useState(true);
-
- const navigate =
- useNavigate();
+ const navigate = useNavigate();
 
  useEffect(() => {
   fetchProducts();
@@ -25,12 +22,8 @@ const Products = () => {
 
  const fetchProducts = async () => {
   try {
-   const res =
-   await API.get("/products");
-
-   setProducts(
-    res.data.products || []
-   );
+   const res = await API.get("/products");
+   setProducts(res.data.products || []);
   } catch (error) {
    console.log(error);
   } finally {
@@ -40,10 +33,7 @@ const Products = () => {
 
  const addToCart = async (productId) => {
   try {
-   const user =
-   JSON.parse(
-    localStorage.getItem("user")
-   );
+   const user = JSON.parse(localStorage.getItem("user"));
 
    if (!user) {
     alert("Please login first");
@@ -51,19 +41,14 @@ const Products = () => {
     return;
    }
 
-   await API.post(
-    "/cart/add",
-    {
-     productId,
-     quantity: 1,
-    }
-   );
+   await API.post("/cart/add", {
+    productId,
+    quantity: 1,
+   });
 
    alert("Product added to cart");
    navigate("/cart");
   } catch (error) {
-   console.log(error);
-
    alert(
     error.response?.data?.message ||
     "Failed to add product to cart"
@@ -73,10 +58,7 @@ const Products = () => {
 
  const addToWishlist = async (productId) => {
   try {
-   const user =
-   JSON.parse(
-    localStorage.getItem("user")
-   );
+   const user = JSON.parse(localStorage.getItem("user"));
 
    if (!user) {
     alert("Please login first");
@@ -84,18 +66,13 @@ const Products = () => {
     return;
    }
 
-   await API.post(
-    "/wishlist/add",
-    {
-     productId,
-    }
-   );
+   await API.post("/wishlist/add", {
+    productId,
+   });
 
    alert("Product added to wishlist");
    navigate("/wishlist");
   } catch (error) {
-   console.log(error);
-
    alert(
     error.response?.data?.message ||
     "Failed to add product to wishlist"
@@ -103,104 +80,109 @@ const Products = () => {
   }
  };
 
+ const filteredProducts = products.filter(
+  product =>
+   product.name
+    .toLowerCase()
+    .includes(keyword.toLowerCase()) ||
+   product.category
+    .toLowerCase()
+    .includes(keyword.toLowerCase()) ||
+   product.brand
+    ?.toLowerCase()
+    .includes(keyword.toLowerCase())
+ );
+
  return (
   <div className="products-page">
-   <div className="page-heading">
-    <h1>Latest Electronics</h1>
+   <div className="products-header">
+    <div>
+     <h1>Latest Electronics</h1>
+     <p>Shop mobiles, laptops, gadgets and accessories</p>
+    </div>
 
-    <p>
-     Explore our best products and smart deals
-    </p>
+    <input
+     type="text"
+     placeholder="Search products..."
+     value={keyword}
+     onChange={(e) => setKeyword(e.target.value)}
+    />
    </div>
 
-   {
-    loading
-    ?
-    <h2>Loading Products...</h2>
-    :
+   {loading ? (
     <div className="product-grid">
-     {
-      products.map(
-       product => (
-        <div
-         className="product-card"
-         key={product._id}
-        >
-         <div className="product-img-box">
-          {
-           product.images &&
-           product.images.length > 0
-           ?
-           <img
-            src={product.images[0].url}
-            alt={product.name}
-           />
-           :
-           <img
-            src="/favicon.svg"
-            alt="product"
-           />
-          }
-         </div>
-
-         <div className="product-info">
-          <h3>{product.name}</h3>
-
-          <p className="category">
-           {product.category}
-          </p>
-
-          <p className="price">
-           ₹{product.price}
-          </p>
-
-          <p
-           className={
-            product.stock > 0
-            ?
-            "stock"
-            :
-            "out-stock"
-           }
-          >
-           {
-            product.stock > 0
-            ?
-            `In Stock (${product.stock})`
-            :
-            "Out Of Stock"
-           }
-          </p>
-
-          <button
-           className="cart-btn"
-           disabled={product.stock <= 0}
-           onClick={() =>
-            addToCart(product._id)
-           }
-          >
-           Add To Cart
-          </button>
-
-          <button
-           className="cart-btn"
-           style={{
-            marginTop: "8px",
-            background: "#2874f0",
-           }}
-           onClick={() =>
-            addToWishlist(product._id)
-           }
-          >
-           Add To Wishlist
-          </button>
-         </div>
-        </div>
-       )
-      )
-     }
+     {[1, 2, 3, 4].map((item) => (
+      <div className="skeleton-card" key={item}></div>
+     ))}
     </div>
-   }
+   ) : filteredProducts.length === 0 ? (
+    <h2>No products found</h2>
+   ) : (
+    <div className="product-grid">
+     {filteredProducts.map((product) => (
+      <div className="product-card" key={product._id}>
+       <div className="product-badge">
+        {product.stock > 0 ? "Available" : "Out of Stock"}
+       </div>
+
+       <div className="product-img-box">
+        <img
+         src={
+          product.images?.[0]?.url ||
+          "/favicon.svg"
+         }
+         alt={product.name}
+        />
+       </div>
+
+       <div className="product-info">
+        <p className="product-category">
+         {product.category}
+        </p>
+
+        <h3>{product.name}</h3>
+
+        <div className="rating-row">
+         ⭐⭐⭐⭐☆ <span>4.5</span>
+        </div>
+
+        <p className="price">
+         ₹{product.price}
+        </p>
+
+        <p
+         className={
+          product.stock > 0
+           ? "stock"
+           : "out-stock"
+         }
+        >
+         {product.stock > 0
+          ? `In Stock (${product.stock})`
+          : "Out Of Stock"}
+        </p>
+
+        <div className="product-actions">
+         <button
+          className="cart-btn"
+          disabled={product.stock <= 0}
+          onClick={() => addToCart(product._id)}
+         >
+          Add To Cart
+         </button>
+
+         <button
+          className="wish-btn"
+          onClick={() => addToWishlist(product._id)}
+         >
+          ❤️
+         </button>
+        </div>
+       </div>
+      </div>
+     ))}
+    </div>
+   )}
   </div>
  );
 };

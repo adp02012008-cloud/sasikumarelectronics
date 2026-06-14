@@ -1,5 +1,5 @@
 import {
- Link,
+ Link
 } from "react-router-dom";
 
 
@@ -7,189 +7,231 @@ import {
 const Home = () => {
 
 
- return(
+return (
 
+<div className="home-page">
 
- <div className="home">
 
 
+<section className="hero">
 
-  {/* HERO SECTION */}
 
+ <div>
 
-  <section className="hero-section">
 
+  <h1>
+   Upgrade Your Digital Life
+  </h1>
 
-   <div className="hero-content">
 
+  <h2>
+   Latest Electronics.
+   Best Prices.
+  </h2>
 
-    <h1>
 
-     Sasikumar Electronics
+  <p>
 
-    </h1>
+   Shop mobiles, laptops,
+   gadgets and accessories
+   with secure payments and
+   smart offers.
 
+  </p>
 
 
-    <h2>
 
-     Smart Electronics.
-     Best Prices.
+  <Link
+   to="/products"
+   className="hero-btn"
+  >
 
-    </h2>
+   Shop Now
 
-
-
-    <p>
-
-     Explore mobiles, gadgets and electronics
-     with secure shopping, smart recommendations
-     and trusted service.
-
-    </p>
-
-
-
-
-    <Link
-     to="/products"
-     className="shop-btn"
-    >
-
-     Shop Now
-
-    </Link>
-
-
-
-   </div>
-
-
-  </section>
-
-
-
-
-
-
-
-  {/* FEATURES */}
-
-
-  <section className="features">
-
-
-   <div>
-
-    <h3>
-     🚚 Fast Delivery
-    </h3>
-
-    <p>
-     Quick and reliable delivery
-    </p>
-
-   </div>
-
-
-
-
-
-   <div>
-
-    <h3>
-     🔒 Secure Payment
-    </h3>
-
-    <p>
-     Razorpay protected checkout
-    </p>
-
-   </div>
-
-
-
-
-
-   <div>
-
-    <h3>
-     🤖 Smart Deals
-    </h3>
-
-    <p>
-     AI powered price updates
-    </p>
-
-   </div>
-
-
-
-
-
-   <div>
-
-    <h3>
-     ⭐ Quality Products
-    </h3>
-
-    <p>
-     Trusted electronics store
-    </p>
-
-   </div>
-
-
-
-
-  </section>
-
-
-
-
-
-
-
-
-  {/* ABOUT */}
-
-
-  <section className="about">
-
-
-   <h2>
-
-    Why Choose Us?
-
-   </h2>
-
-
-
-   <p>
-
-    Sasikumar Electronics provides
-    the latest electronic products
-    with intelligent recommendations,
-    easy ordering and customer support.
-
-   </p>
-
-
-
-  </section>
-
-
+  </Link>
 
 
 
  </div>
 
 
- );
+</section>
+
+
+
+
+
+
+
+
+<section className="categories">
+
+
+ <h2>
+  Shop By Category
+ </h2>
+
+
+ <div className="category-grid">
+
+
+  <div>
+   📱
+   <h3>Mobiles</h3>
+  </div>
+
+
+  <div>
+   💻
+   <h3>Laptops</h3>
+  </div>
+
+
+  <div>
+   🎧
+   <h3>Accessories</h3>
+  </div>
+
+
+  <div>
+   ⌚
+   <h3>Gadgets</h3>
+  </div>
+
+
+ </div>
+
+
+</section>
+
+
+
+
+
+
+
+
+
+<section className="trust-section">
+
+
+ <div>
+
+  🚚
+
+  <h3>
+   Fast Delivery
+  </h3>
+
+  <p>
+   Quick doorstep delivery
+  </p>
+
+ </div>
+
+
+
+
+
+ <div>
+
+  🔒
+
+  <h3>
+   Secure Payment
+  </h3>
+
+  <p>
+   Razorpay protected checkout
+  </p>
+
+ </div>
+
+
+
+
+
+
+ <div>
+
+  ⭐
+
+  <h3>
+   Original Products
+  </h3>
+
+  <p>
+   Quality guaranteed
+  </p>
+
+ </div>
+
+
+
+
+
+
+
+ <div>
+
+  🤖
+
+  <h3>
+   Smart Pricing
+  </h3>
+
+  <p>
+   AI powered best deals
+  </p>
+
+ </div>
+
+
+</section>
+
+
+
+
+
+
+
+
+
+
+<footer>
+
+
+ <h2>
+  Sasikumar Electronics
+ </h2>
+
+
+ <p>
+
+  Your trusted electronics shopping destination
+
+ </p>
+
+
+
+ <p>
+
+ © 2026 Sasikumar Electronics
+
+ </p>
+
+
+</footer>
+
+
+
+
+</div>
+
+);
 
 
 };
-
 
 
 
