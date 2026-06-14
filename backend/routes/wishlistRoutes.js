@@ -1,31 +1,21 @@
-const express =
-  require("express");
+const express = require("express");
 
-const router =
-  express.Router();
+const router = express.Router();
 
 const {
-  addWishlist,
-  getWishlist,
-  removeWishlist,
-} = require(
-  "../controllers/wishlistController"
-);
+ addWishlist,
+ getWishlist,
+ removeWishlist,
+} = require("../controllers/wishlistController");
 
-router.post(
-  "/add",
-  addWishlist
-);
+const {
+ protect,
+} = require("../middleware/authMiddleware");
 
-router.get(
-  "/:userId",
-  getWishlist
-);
+router.post("/add", protect, addWishlist);
 
-router.delete(
-  "/:userId/:productId",
-  removeWishlist
-);
+router.get("/", protect, getWishlist);
 
-module.exports =
-  router;
+router.delete("/:productId", protect, removeWishlist);
+
+module.exports = router;

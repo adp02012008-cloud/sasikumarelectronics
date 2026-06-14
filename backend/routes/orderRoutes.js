@@ -1,158 +1,31 @@
-const express =
-require("express");
+const express = require("express");
 
-
-const router =
-express.Router();
-
-
+const router = express.Router();
 
 const {
-
-  createOrder,
-
-
-  getOrders,
-
-
-  getSingleOrder,
-
-
-  downloadInvoice,
-
-
-  updateOrderStatus,
-
-
-} = require(
-  "../controllers/orderController"
-);
-
-
+ createOrder,
+ getOrders,
+ getMyOrders,
+ getSingleOrder,
+ downloadInvoice,
+ updateOrderStatus,
+} = require("../controllers/orderController");
 
 const {
-
-  protect,
-
-
-  adminOnly,
-
-
-} =
-require(
- "../middleware/authMiddleware"
-);
-
-
-
-
-/*
-=========================
-CREATE ORDER USER
-=========================
-*/
-
-
-router.post(
-
- "/",
-
  protect,
-
- createOrder
-
-);
-
-
-
-
-
-/*
-=========================
-DOWNLOAD INVOICE
-=========================
-*/
-
-
-router.get(
-
- "/invoice/:id",
-
- protect,
-
- downloadInvoice
-
-);
-
-
-
-
-
-/*
-=========================
-UPDATE ORDER STATUS ADMIN
-=========================
-*/
-
-
-router.put(
-
- "/status/:id",
-
- protect,
-
  adminOnly,
+} = require("../middleware/authMiddleware");
 
- updateOrderStatus
+router.post("/", protect, createOrder);
 
-);
+router.get("/my-orders", protect, getMyOrders);
 
+router.get("/invoice/:id", protect, downloadInvoice);
 
+router.put("/status/:id", protect, adminOnly, updateOrderStatus);
 
+router.get("/", protect, adminOnly, getOrders);
 
+router.get("/:id", protect, getSingleOrder);
 
-/*
-=========================
-GET ALL ORDERS ADMIN
-=========================
-*/
-
-
-router.get(
-
- "/",
-
- protect,
-
- adminOnly,
-
- getOrders
-
-);
-
-
-
-
-
-/*
-=========================
-GET SINGLE ORDER USER
-=========================
-*/
-
-
-router.get(
-
- "/:id",
-
- protect,
-
- getSingleOrder
-
-);
-
-
-
-
-module.exports =
-router;
+module.exports = router;

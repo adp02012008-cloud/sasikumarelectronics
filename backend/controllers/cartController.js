@@ -1,237 +1,140 @@
-const Cart =
-require("../models/Cart");
+const Cart = require("../models/Cart");
 
+exports.addToCart = async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+    const userId = req.user.id;
 
-/*
-==========================
-ADD TO CART
-==========================
-*/
+    let cart = await Cart.findOne({ user: userId });
 
-exports.addToCart =
-async (req,res)=>{
+    if (!cart) {
+      cart = await Cart.create({
+        user: userId,
+        items: [
+          {
+            product: productId,
+            quantity: quantity || 1,
+          },
+        ],
+      });
+    } else {
+      const item = cart.items.find(
+        (i) => i.product.toString() === productId
+      );
 
- try{
+      if (item) {
+        item.quantity += quantity || 1;
+      } else {
+        cart.items.push({
+          product: productId,
+          quantity: quantity || 1,
+        });
+      }
 
-  const {
-   userId,
-   productId,
-   quantity,
-  } = req.body;
+      await cart.save();
+    }
 
-  let cart =
-  await Cart.findOne({
-   user:userId,
-  });
+    cart = await Cart.findOne({ user: userId }).populate("items.product");
 
-  if(!cart){
-
-   cart =
-   await Cart.create({
-    user:userId,
-    items:[
-     {
-      product:productId,
-      quantity:quantity || 1,
-     },
-    ],
-   });
-
-  }
-  else{
-
-   const item =
-   cart.items.find(
-    (i)=>
-    i.product.toString() ===
-    productId
-   );
-
-   if(item){
-
-    item.quantity +=
-    quantity || 1;
-
-   }
-   else{
-
-    cart.items.push({
-     product:productId,
-     quantity:quantity || 1,
+    res.status(200).json({
+      success: true,
+      cart,
     });
-
-   }
-
-   await cart.save();
-
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
-
-  cart =
-  await Cart.findOne({
-   user:userId,
-  }).populate(
-   "items.product"
-  );
-
-  res.status(200).json({
-   success:true,
-   cart,
-  });
-
- }
- catch(error){
-
-  res.status(500).json({
-   success:false,
-   message:error.message,
-  });
-
- }
-
 };
 
+exports.getCart = async (req, res) => {
+  try {
+    const userId = req.user.id;
 
-/*
-==========================
-GET CART
-==========================
-*/
+    let cart = await Cart.findOne({ user: userId }).populate("items.product");
 
-exports.getCart =
-async (req,res)=>{
+    if (!cart) {
+      cart = {
+        user: userId,
+        items: [],
+      };
+    }
 
- try{
-
-  let cart =
-  await Cart.findOne({
-   user:req.params.userId,
-  }).populate(
-   "items.product"
-  );
-
-  if(!cart){
-
-   cart = {
-    user:req.params.userId,
-    items:[],
-   };
-
+    res.status(200).json({
+      success: true,
+      cart,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
-
-  res.status(200).json({
-   success:true,
-   cart,
-  });
-
- }
- catch(error){
-
-  res.status(500).json({
-   success:false,
-   message:error.message,
-  });
-
- }
-
 };
 
+exports.removeItem = async (req, res) => {
+  try {
+    const userId = req.user.id;
 
-/*
-==========================
-REMOVE ITEM
-==========================
-*/
+    const cart = await Cart.findOne({ user: userId });
 
-exports.removeItem =
-async (req,res)=>{
+    if (!cart) {
+      return res.status(200).json({
+        success: true,
+        cart: {
+          items: [],
+        },
+      });
+    }
 
- try{
+    cart.items = cart.items.filter(
+      (item) => item.product.toString() !== req.params.productId
+    );
 
-  const cart =
-  await Cart.findOne({
-   user:req.params.userId,
-  });
+    await cart.save();
 
-  if(!cart){
+    const updatedCart = await Cart.findOne({ user: userId }).populate(
+      "items.product"
+    );
 
-   return res.status(200).json({
-    success:true,
-    cart:{
-     items:[],
-    },
-   });
-
+    res.status(200).json({
+      success: true,
+      cart: updatedCart,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
-
-  cart.items =
-  cart.items.filter(
-   (item)=>
-   item.product.toString() !==
-   req.params.productId
-  );
-
-  await cart.save();
-
-  res.status(200).json({
-   success:true,
-   cart,
-  });
-
- }
- catch(error){
-
-  res.status(500).json({
-   success:false,
-   message:error.message,
-  });
-
- }
-
 };
 
+exports.clearCart = async (req, res) => {
+  try {
+    const userId = req.user.id;
 
-/*
-==========================
-CLEAR CART
-==========================
-*/
+    const cart = await Cart.findOne({ user: userId });
 
-exports.clearCart =
-async (req,res)=>{
+    if (!cart) {
+      return res.status(200).json({
+        success: true,
+        message: "Cart Already Empty",
+      });
+    }
 
- try{
+    cart.items = [];
 
-  const cart =
-  await Cart.findOne({
-   user:req.params.userId,
-  });
+    await cart.save();
 
-  if(!cart){
-
-   return res.status(200).json({
-    success:true,
-    message:"Cart Already Empty",
-   });
-
+    res.status(200).json({
+      success: true,
+      message: "Cart Cleared",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
-
-  cart.items = [];
-
-  await cart.save();
-
-  res.status(200).json({
-   success:true,
-   message:"Cart Cleared",
-  });
-
- }
- catch(error){
-
-  res.status(500).json({
-   success:false,
-   message:error.message,
-  });
-
- }
-
 };
