@@ -162,7 +162,11 @@ const Products = () => {
       ) : (
         <div className="product-grid">
           {products.map((product) => (
-            <div className="product-card pro-product-card" key={product._id}>
+            <div
+              className="product-card pro-product-card"
+              key={product._id}
+              onClick={() => navigate(`/products/${product._id}`)}
+            >
               <div className="product-badge">
                 {product.stock > 0 ? "In Stock" : "Out of Stock"}
               </div>
@@ -211,7 +215,10 @@ const Products = () => {
                     : "Currently unavailable"}
                 </p>
 
-                <div className="product-actions">
+                <div
+                  className="product-actions"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     className="cart-btn"
                     disabled={product.stock <= 0}
@@ -230,7 +237,10 @@ const Products = () => {
 
                 <button
                   className="review-open-btn"
-                  onClick={() => setReviewProduct(product)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setReviewProduct(product);
+                  }}
                 >
                   Rate / Comment
                 </button>
