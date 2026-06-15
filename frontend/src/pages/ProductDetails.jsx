@@ -1,34 +1,20 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  useNavigate,
-  useParams,
-} from "react-router-dom";
-
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import API from "../api/axios";
 
 const ProductDetails = () => {
   const { id } = useParams();
-
   const navigate = useNavigate();
 
-  const [product, setProduct] =
-    useState(null);
+  const [product, setProduct] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [selectedImage, setSelectedImage] = useState("");
+  const [quantity, setQuantity] = useState(1);
 
-  const [reviews, setReviews] =
-    useState([]);
-
-  const [selectedImage, setSelectedImage] =
-    useState("");
-
-  const [reviewForm, setReviewForm] =
-    useState({
-      rating: 5,
-      comment: "",
-    });
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    comment: "",
+  });
 
   useEffect(() => {
     fetchProduct();
@@ -37,16 +23,10 @@ const ProductDetails = () => {
 
   const fetchProduct = async () => {
     try {
-      const res = await API.get(
-        `/products/${id}`
-      );
+      const res = await API.get(`/products/${id}`);
 
       setProduct(res.data.product);
-
-      setSelectedImage(
-        res.data.product.images?.[0]?.url ||
-          "/favicon.svg"
-      );
+      setSelectedImage(res.data.product.images?.[0]?.url || "/favicon.svg");
     } catch (error) {
       console.log(error);
       alert("Product not found");
@@ -56,23 +36,16 @@ const ProductDetails = () => {
 
   const fetchReviews = async () => {
     try {
-      const res = await API.get(
-        `/reviews/${id}`
-      );
-
-      setReviews(
-        res.data.reviews || []
-      );
+      const res = await API.get(`/reviews/${id}`);
+      setReviews(res.data.reviews || []);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const addToCart = async () => {
+  const addToCart = async (goCart = true) => {
     try {
-      const user = JSON.parse(
-        localStorage.getItem("user")
-      );
+      const user = JSON.parse(localStorage.getItem("user"));
 
       if (!user) {
         alert("Please login first");
@@ -82,24 +55,26 @@ const ProductDetails = () => {
 
       await API.post("/cart/add", {
         productId: id,
-        quantity: 1,
+        quantity,
       });
 
-      alert("Product added to cart");
-      navigate("/cart");
+      if (goCart) {
+        navigate("/cart");
+      } else {
+        alert("Product added to cart");
+      }
     } catch (error) {
-      alert(
-        error.response?.data?.message ||
-          "Failed to add product"
-      );
+      alert(error.response?.data?.message || "Failed to add product");
     }
+  };
+
+  const buyNow = async () => {
+    await addToCart(true);
   };
 
   const addToWishlist = async () => {
     try {
-      const user = JSON.parse(
-        localStorage.getItem("user")
-      );
+      const user = JSON.parse(localStorage.getItem("user"));
 
       if (!user) {
         alert("Please login first");
@@ -113,10 +88,7 @@ const ProductDetails = () => {
 
       alert("Added to wishlist");
     } catch (error) {
-      alert(
-        error.response?.data?.message ||
-          "Wishlist failed"
-      );
+      alert(error.response?.data?.message || "Wishlist failed");
     }
   };
 
@@ -140,10 +112,7 @@ const ProductDetails = () => {
       fetchProduct();
       fetchReviews();
     } catch (error) {
-      alert(
-        error.response?.data?.message ||
-          "Login required to review"
-      );
+      alert(error.response?.data?.message || "Login required to review");
     }
   };
 
@@ -155,112 +124,141 @@ const ProductDetails = () => {
     );
   }
 
+  const mrp = Math.round(product.price * 1.5);
+  const discount = Math.round(((mrp - product.price) / mrp) * 100);
+
   return (
-    <div className="product-details-page">
-      <div className="product-detail-card">
-        <div className="detail-gallery">
-          <div className="thumbnail-list">
-            {
-              product.images?.length > 0
-                ? product.images.map((img) => (
-                    <img
-                      key={img._id || img.url}
-                      src={img.url}
-                      alt={product.name}
-                      className={
-                        selectedImage === img.url
-                          ? "active-thumb"
-                          : ""
-                      }
-                      onClick={() =>
-                        setSelectedImage(img.url)
-                      }
-                    />
-                  ))
-                : (
-                    <img
-                      src="/favicon.svg"
-                      alt="product"
-                    />
-                  )
-            }
+    <div className="amazon-detail-page">
+      <div className="breadcrumb">
+        Home / {product.category} / {product.name}
+      </div>
+
+      <div className="amazon-detail-grid">
+        <div className="amazon-gallery">
+          <div className="thumb-column">
+            {product.images?.length > 0 ? (
+              product.images.map((img) => (
+                <img
+                  key={img._id || img.url}
+                  src={img.url}
+                  alt={product.name}
+                  className={selectedImage === img.url ? "active-thumb" : ""}
+                  onClick={() => setSelectedImage(img.url)}
+                />
+              ))
+            ) : (
+              <img src="/favicon.svg" alt="product" />
+            )}
           </div>
 
-          <div className="main-detail-image">
-            <img
-              src={selectedImage}
-              alt={product.name}
-            />
+          <div className="big-image-box">
+            <button className="floating-heart" onClick={addToWishlist}>
+              ♡
+            </button>
+
+            <img src={selectedImage} alt={product.name} />
+
+            <p>Click thumbnails to view full image</p>
           </div>
         </div>
 
-        <div className="detail-info">
-          <p className="product-category">
-            {product.category}
-          </p>
-
+        <div className="product-main-info">
           <h1>{product.name}</h1>
 
-          <p className="detail-brand">
-            Brand: {product.brand || "Generic"}
+          <p className="brand-line">
+            Brand: <b>{product.brand || "Generic"}</b>
           </p>
 
-          <div className="detail-rating">
-            ⭐ {product.ratings || 0}
-            <span>
-              ({product.numReviews || 0} reviews)
-            </span>
+          <div className="rating-line">
+            ⭐ {product.ratings || 0} ({product.numReviews || 0} reviews)
           </div>
 
           <hr />
 
+          <p className="deal-tag">Limited time deal</p>
+
+          <div className="detail-price-row">
+            <span>-{discount}%</span>
+            <h2>₹{product.price}</h2>
+          </div>
+
+          <p className="mrp-line">
+            M.R.P.: <del>₹{mrp}</del>
+          </p>
+
+          <p className="tax-line">Inclusive of all taxes</p>
+
+          <div className="offer-grid">
+            <div>
+              <b>Cashback</b>
+              <p>Save more with online payment offers</p>
+            </div>
+
+            <div>
+              <b>Partner Offers</b>
+              <p>Special discounts on selected products</p>
+            </div>
+
+            <div>
+              <b>Invoice</b>
+              <p>GST style invoice available after order</p>
+            </div>
+          </div>
+
+          <h3>About this item</h3>
+
+          <p className="detail-description">{product.description}</p>
+        </div>
+
+        <aside className="buy-box">
           <h2>₹{product.price}</h2>
 
-          <p
-            className={
-              product.stock > 0
-                ? "stock"
-                : "out-stock"
-            }
+          <p className="delivery-line">
+            FREE delivery available at checkout
+          </p>
+
+          <p className={product.stock > 0 ? "stock big-stock" : "out-stock"}>
+            {product.stock > 0 ? "In stock" : "Out of stock"}
+          </p>
+
+          <label>Quantity</label>
+
+          <select
+            value={quantity}
+            onChange={(e) => setQuantity(Number(e.target.value))}
           >
-            {product.stock > 0
-              ? `In Stock (${product.stock})`
-              : "Out of Stock"}
-          </p>
+            {[1, 2, 3, 4, 5].map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
 
-          <p className="detail-description">
-            {product.description}
-          </p>
+          <button
+            className="amazon-cart-btn"
+            disabled={product.stock <= 0}
+            onClick={() => addToCart(false)}
+          >
+            Add to Cart
+          </button>
 
-          <div className="detail-actions">
-            <button
-              disabled={product.stock <= 0}
-              onClick={addToCart}
-            >
-              Add To Cart
-            </button>
+          <button
+            className="amazon-buy-btn"
+            disabled={product.stock <= 0}
+            onClick={buyNow}
+          >
+            Buy Now
+          </button>
 
-            <button
-              className="buy-btn"
-              disabled={product.stock <= 0}
-              onClick={() => {
-                addToCart();
-              }}
-            >
-              Buy Now
-            </button>
+          <button className="wishlist-wide" onClick={addToWishlist}>
+            Add to Wish List
+          </button>
 
-            <button
-              className="detail-wish"
-              onClick={addToWishlist}
-            >
-              Add To Wishlist
-            </button>
-          </div>
-        </div>
+          <p className="secure-text">🔒 Secure transaction</p>
+        </aside>
       </div>
 
-      <div className="review-section">
+      <section className="reviews-area">
         <div className="review-form-box">
           <h2>Rate This Product</h2>
 
@@ -293,9 +291,7 @@ const ProductDetails = () => {
               }
             />
 
-            <button>
-              Submit Review
-            </button>
+            <button>Submit Review</button>
           </form>
         </div>
 
@@ -306,26 +302,15 @@ const ProductDetails = () => {
             <p>No reviews yet. Be the first to review.</p>
           ) : (
             reviews.map((review) => (
-              <div
-                className="review-card"
-                key={review._id}
-              >
-                <h3>
-                  ⭐ {review.rating} / 5
-                </h3>
-
-                <p>
-                  {review.comment}
-                </p>
-
-                <small>
-                  By {review.user?.name || "Customer"}
-                </small>
+              <div className="review-card" key={review._id}>
+                <h3>⭐ {review.rating} / 5</h3>
+                <p>{review.comment}</p>
+                <small>By {review.user?.name || "Customer"}</small>
               </div>
             ))
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

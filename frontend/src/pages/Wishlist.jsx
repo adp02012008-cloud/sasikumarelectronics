@@ -1,13 +1,10 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 
 const Wishlist = () => {
-  const [wishlist, setWishlist] =
-  useState([]);
+  const [wishlist, setWishlist] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchWishlist();
@@ -15,13 +12,8 @@ const Wishlist = () => {
 
   const fetchWishlist = async () => {
     try {
-      const res = await API.get(
-        "/wishlist"
-      );
-
-      setWishlist(
-        res.data.wishlist?.products || []
-      );
+      const res = await API.get("/wishlist");
+      setWishlist(res.data.wishlist?.products || []);
     } catch (error) {
       console.log(error);
     }
@@ -29,66 +21,104 @@ const Wishlist = () => {
 
   const removeWishlist = async (id) => {
     try {
-      await API.delete(
-        `/wishlist/${id}`
-      );
-
+      await API.delete(`/wishlist/${id}`);
       fetchWishlist();
     } catch (error) {
       console.log(error);
     }
   };
 
+  const addToCart = async (productId) => {
+    try {
+      await API.post("/cart/add", {
+        productId,
+        quantity: 1,
+      });
+
+      alert("Added to cart");
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to add cart");
+    }
+  };
+
   return (
-    <div className="wishlist-page">
-      <h1>My Wishlist</h1>
+    <div className="account-layout">
+      <aside className="account-sidebar">
+        <div className="account-user">
+          <div className="avatar">👤</div>
+          <div>
+            <p>Hello,</p>
+            <h3>Customer</h3>
+          </div>
+        </div>
 
-      {
-        wishlist.length === 0
-        ? (
-          <h2>Wishlist Empty</h2>
-        )
-        : (
-          <div className="wishlist-grid">
-            {
-              wishlist.map(
-                product => (
-                  <div
-                    className="wishlist-card"
-                    key={product._id}
-                  >
-                    <img
-                      src={
-                        product.images?.[0]?.url ||
-                        "/favicon.svg"
-                      }
-                      alt={product.name}
-                    />
+        <button onClick={() => navigate("/orders")}>📦 My Orders</button>
+        <button className="active">❤️ My Wishlist</button>
+        <button onClick={() => navigate("/cart")}>🛒 My Cart</button>
+      </aside>
 
-                    <h3>
-                      {product.name}
-                    </h3>
+      <main className="wishlist-page pro-wishlist-page">
+        <div className="page-title-row">
+          <h1>My Wishlist ({wishlist.length})</h1>
+        </div>
 
-                    <p>
-                      ₹{product.price}
-                    </p>
+        {wishlist.length === 0 ? (
+          <div className="empty-box">
+            <h2>Wishlist Empty</h2>
+            <button onClick={() => navigate("/products")}>
+              Continue Shopping
+            </button>
+          </div>
+        ) : (
+          <div className="wishlist-list">
+            {wishlist.map((product) => (
+              <div className="wishlist-row" key={product._id}>
+                <img
+                  src={product.images?.[0]?.url || "/favicon.svg"}
+                  alt={product.name}
+                  onClick={() => navigate(`/products/${product._id}`)}
+                />
+
+                <div className="wishlist-info">
+                  <h3 onClick={() => navigate(`/products/${product._id}`)}>
+                    {product.name}
+                  </h3>
+
+                  <p>{product.category}</p>
+
+                  <div className="rating-row">
+                    ⭐ {product.ratings || 0} ({product.numReviews || 0})
+                  </div>
+
+                  <h2>₹{product.price}</h2>
+
+                  <span className="green-text">In stock</span>
+
+                  <div className="wishlist-actions">
+                    <button onClick={() => addToCart(product._id)}>
+                      Add to Cart
+                    </button>
 
                     <button
-                      onClick={() =>
-                        removeWishlist(
-                          product._id
-                        )
-                      }
+                      className="remove-outline"
+                      onClick={() => removeWishlist(product._id)}
                     >
                       Remove
                     </button>
                   </div>
-                )
-              )
-            }
+                </div>
+
+                <button
+                  className="trash-btn"
+                  onClick={() => removeWishlist(product._id)}
+                >
+                  🗑
+                </button>
+              </div>
+            ))}
           </div>
-        )
-      }
+        )}
+      </main>
     </div>
   );
 };
