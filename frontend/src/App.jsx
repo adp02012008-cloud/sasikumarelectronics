@@ -15,43 +15,26 @@ import AdminOrders from "./pages/AdminOrders";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import AdminUsers from "./pages/AdminUsers";
+import Analytics from "./pages/Analytics";
 
-import ProtectedRoute
-from "./routes/ProtectedRoute";
-
+import ProtectedRoute from "./routes/ProtectedRoute";
 import Navbar from "./components/Navbar";
 
 import "./App.css";
 
-
 function App() {
-
   return (
     <>
-
       <Navbar />
 
       <Routes>
+        <Route path="/" element={<Home />} />
 
-        <Route
-          path="/"
-          element={<Home />}
-        />
+        <Route path="/products" element={<Products />} />
 
-        <Route
-          path="/products"
-          element={<Products />}
-        />
+        <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-
-        <Route
-          path="/register"
-          element={<Register />}
-        />
+        <Route path="/register" element={<Register />} />
 
         <Route
           path="/cart"
@@ -125,8 +108,15 @@ function App() {
           }
         />
 
+        <Route
+          path="/admin/analytics"
+          element={
+            <ProtectedRoute admin={true}>
+              <Analytics />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
-
     </>
   );
 }

@@ -1,14 +1,23 @@
 import {
- Link
-} from "react-router-dom";
-
-import {
- useContext
+ useContext,
+ useEffect,
+ useState,
 } from "react";
 
+
 import {
- AuthContext
+ Link,
+ useNavigate,
+} from "react-router-dom";
+
+
+import {
+ AuthContext,
 } from "../context/AuthContext";
+
+
+import API from "../api/axios";
+
 
 
 const Navbar = () => {
@@ -16,41 +25,317 @@ const Navbar = () => {
 
  const {
   user,
-  logout
+  logout,
  } =
  useContext(
   AuthContext
  );
 
 
- return (
+ const navigate =
+ useNavigate();
+
+
+
+ const [
+  keyword,
+  setKeyword,
+ ] =
+ useState("");
+
+
+
+ const [
+  suggestions,
+  setSuggestions,
+ ] =
+ useState([]);
+
+
+
+
+
+ useEffect(()=>{
+
+
+  const timer =
+  setTimeout(()=>{
+
+
+   fetchSuggestions();
+
+
+  },300);
+
+
+
+  return()=>clearTimeout(timer);
+
+
+ },[keyword]);
+
+
+
+
+
+ const fetchSuggestions =
+ async()=>{
+
+
+  try{
+
+
+   if(
+    keyword.trim()
+    ===
+    ""
+   ){
+
+    setSuggestions([]);
+
+    return;
+
+   }
+
+
+
+   const res =
+   await API.get(
+    `/products/suggestions?keyword=${keyword}`
+   );
+
+
+
+   setSuggestions(
+    res.data.suggestions || []
+   );
+
+
+  }
+  catch(error){
+
+   console.log(error);
+
+  }
+
+
+ };
+
+
+
+
+
+
+
+ const searchHandler =
+ ()=>{
+
+
+  if(
+   keyword.trim()
+  ){
+
+
+   navigate(
+    `/products?search=${keyword}`
+   );
+
+
+   setSuggestions([]);
+
+
+  }
+
+
+ };
+
+
+
+
+
+
+
+ const openProduct =
+ (name)=>{
+
+
+  setKeyword(name);
+
+
+  navigate(
+   `/products?search=${name}`
+  );
+
+
+  setSuggestions([]);
+
+
+ };
+
+
+
+
+
+
+
+
+
+
+ return(
+
 
  <>
+
 
  <nav className="main-navbar">
 
 
+
   <div className="nav-logo">
 
+
    <Link to="/">
+
     ⚡ Sasikumar Electronics
+
    </Link>
 
+
   </div>
+
+
+
+
 
 
 
   <div className="nav-search">
 
+
    <input
-    placeholder="Search mobiles, laptops, accessories..."
+
+    value={
+     keyword
+    }
+
+    onChange={
+     (e)=>
+     setKeyword(
+      e.target.value
+     )
+    }
+
+
+    placeholder=
+    "Search bike lights, car accessories, electrical products..."
+
+
    />
 
-   <button>
+
+
+   <button
+    onClick={
+     searchHandler
+    }
+   >
+
     Search
+
    </button>
 
+
+
+
+
+   {
+
+
+    suggestions.length > 0
+    &&
+
+
+    <div className="suggestion-box">
+
+
+    {
+
+     suggestions.map(
+      item=>(
+
+
+       <div
+
+        className="suggestion-item"
+
+        key={
+         item._id
+        }
+
+        onClick={
+         ()=>openProduct(
+          item.name
+         )
+        }
+
+       >
+
+
+        <img
+
+         src={
+          item.images?.[0]?.url
+         }
+
+        />
+
+
+        <div>
+
+
+         <b>
+          {item.name}
+         </b>
+
+
+         <p>
+
+          {item.category}
+
+          {" • ₹"}
+
+          {item.price}
+
+         </p>
+
+
+
+        </div>
+
+
+
+       </div>
+
+
+      )
+     )
+
+
+    }
+
+
+    </div>
+
+
+   }
+
+
+
   </div>
+
+
+
+
 
 
 
@@ -58,51 +343,73 @@ const Navbar = () => {
   <div className="nav-user">
 
 
+
    {
 
-    user ?
+
+    user
+
+    ?
 
     <>
 
-     <span>
-      👋 {user.name}
-     </span>
+
+    <span>
+
+     👋 {user.name}
+
+    </span>
 
 
-     <button
-      onClick={logout}
-     >
 
-      Logout
+    <button
+     onClick={
+      logout
+     }
+    >
 
-     </button>
+     Logout
+
+    </button>
 
 
     </>
+
 
 
     :
 
 
+
     <>
 
-     <Link to="/login">
-      Login
-     </Link>
+
+    <Link to="/login">
+
+     Login
+
+    </Link>
 
 
-     <Link to="/register">
-      Register
-     </Link>
+
+    <Link to="/register">
+
+     Register
+
+    </Link>
+
 
 
     </>
 
+
+
    }
 
 
-  </div>
 
+
+  </div>
 
 
  </nav>
@@ -113,46 +420,70 @@ const Navbar = () => {
 
 
 
+
+
+
  <div className="category-navbar">
 
 
+
   <Link to="/">
+
    Home
+
   </Link>
 
 
 
   <Link to="/products">
+
    Products
+
   </Link>
 
 
 
 
 
+
+
   {
+
    user &&
+
+
    <>
 
 
-   <Link to="/wishlist">
-    ❤️ Wishlist
-   </Link>
+    <Link to="/wishlist">
 
+     ❤️ Wishlist
 
-   <Link to="/cart">
-    🛒 Cart
-   </Link>
+    </Link>
 
 
 
-   <Link to="/orders">
-    Orders
-   </Link>
+    <Link to="/cart">
+
+     🛒 Cart
+
+    </Link>
+
+
+
+    <Link to="/orders">
+
+     Orders
+
+    </Link>
 
 
    </>
+
+
   }
+
+
 
 
 
@@ -160,70 +491,95 @@ const Navbar = () => {
 
 
   {
-   user?.role === "admin"
+
+
+   user?.role==="admin"
+
    &&
+
+
    <>
 
 
-   <Link
-    className="admin-link"
-    to="/admin"
-   >
+    <Link
+     className="admin-link"
+     to="/admin"
+    >
 
-    Dashboard
+     Dashboard
 
-   </Link>
-
-
-
-
-
-   <Link
-    className="admin-link"
-    to="/admin/products"
-   >
-
-    Add Products
-
-   </Link>
+    </Link>
 
 
 
 
 
-   <Link
-    className="admin-link"
-    to="/admin/orders"
-   >
+    <Link
+     className="admin-link"
+     to="/admin/products"
+    >
 
-    Manage Orders
+     Add Products
 
-   </Link>
-
-
+    </Link>
 
 
 
-   <Link
-    className="admin-link"
-    to="/admin/users"
-   >
 
-    Users
 
-   </Link>
+    <Link
+     className="admin-link"
+     to="/admin/orders"
+    >
+
+     Manage Orders
+
+    </Link>
+
+
+
+
+
+    <Link
+     className="admin-link"
+     to="/admin/users"
+    >
+
+     Users
+
+    </Link>
+
+
+
+
+
+    <Link
+     className="admin-link"
+     to="/admin/analytics"
+    >
+
+     Analytics
+
+    </Link>
+
 
 
 
    </>
+
+
   }
+
+
 
 
 
  </div>
 
 
+
  </>
+
 
  );
 

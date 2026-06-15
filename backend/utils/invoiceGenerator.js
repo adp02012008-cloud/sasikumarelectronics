@@ -2,6 +2,10 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 
+const formatCurrency = (amount) => {
+  return `Rs. ${Number(amount || 0).toFixed(2)}`;
+};
+
 const generateInvoice = (order) => {
   const invoiceDir = path.join(__dirname, "../invoices");
 
@@ -15,60 +19,128 @@ const generateInvoice = (order) => {
   );
 
   const doc = new PDFDocument({
-    margin: 50,
+    margin: 45,
+    size: "A4",
   });
 
   doc.pipe(fs.createWriteStream(invoicePath));
 
-  doc
-    .fontSize(22)
-    .text("Sasikumar Electronics", { align: "center" });
+  doc.rect(0, 0, 595, 95).fill("#111827");
 
   doc
-    .fontSize(16)
-    .text("Tax Invoice / Order Receipt", { align: "center" });
+    .fillColor("#ffffff")
+    .fontSize(24)
+    .text("Sasikumar Electronics", 45, 28);
 
-  doc.moveDown();
+  doc
+    .fontSize(11)
+    .fillColor("#d1d5db")
+    .text("Industrial, Automobile & Electrical Products", 45, 58);
 
-  doc.fontSize(12).text(`Order ID: ${order._id}`);
-  doc.text(`Order Status: ${order.orderStatus}`);
-  doc.text(`Payment Method: ${order.paymentMethod}`);
-  doc.text(`Payment ID: ${order.paymentInfo?.razorpayPaymentId || "N/A"}`);
-  doc.text(`Order Date: ${new Date(order.createdAt).toLocaleString()}`);
+  doc
+    .fontSize(18)
+    .fillColor("#ffffff")
+    .text("INVOICE", 450, 32);
 
-  doc.moveDown();
+  doc.fillColor("#111827");
 
-  doc.fontSize(14).text("Customer Details");
-  doc.fontSize(12).text(`Name: ${order.shippingAddress.fullName}`);
-  doc.text(`Phone: ${order.shippingAddress.phone}`);
+  let y = 125;
+
+  doc.fontSize(11).text(`Invoice No: INV-${order._id}`, 45, y);
+  doc.text(`Order Date: ${new Date(order.createdAt).toLocaleString()}`, 45, y + 18);
+  doc.text(`Order Status: ${order.orderStatus}`, 45, y + 36);
+  doc.text(`Payment Method: ${order.paymentMethod}`, 45, y + 54);
+  doc.text(`Payment ID: ${order.paymentInfo?.razorpayPaymentId || "N/A"}`, 45, y + 72);
+
+  doc
+    .fontSize(13)
+    .fillColor("#2563eb")
+    .text("Bill To", 350, y);
+
+  doc.fillColor("#111827").fontSize(11);
+  doc.text(order.shippingAddress?.fullName || "Customer", 350, y + 20);
+  doc.text(`Phone: ${order.shippingAddress?.phone || "N/A"}`, 350, y + 38);
   doc.text(
-    `Address: ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}`
+    `${order.shippingAddress?.address || ""}, ${order.shippingAddress?.city || ""}`,
+    350,
+    y + 56,
+    {
+      width: 190,
+    }
   );
-  doc.text(`Country: ${order.shippingAddress.country}`);
+  doc.text(
+    `${order.shippingAddress?.state || ""} - ${order.shippingAddress?.pincode || ""}`,
+    350,
+    y + 88
+  );
 
-  doc.moveDown();
+  y = 250;
 
-  doc.fontSize(14).text("Order Items");
+  doc
+    .rect(45, y, 505, 30)
+    .fill("#2563eb");
+
+  doc.fillColor("#ffffff").fontSize(11);
+  doc.text("No", 55, y + 10);
+  doc.text("Product Name", 95, y + 10);
+  doc.text("Qty", 355, y + 10);
+  doc.text("Unit Price", 400, y + 10);
+  doc.text("Total", 490, y + 10);
+
+  y += 30;
+
+  let grandTotal = 0;
 
   order.orderItems.forEach((item, index) => {
-    doc.fontSize(12).text(
-      `${index + 1}. Product ID: ${item.product} | Qty: ${item.quantity} | Price: ₹${item.price}`
-    );
+    const productName =
+      item.product?.name ||
+      item.productName ||
+      "Product";
+
+    const qty = item.quantity || 1;
+    const price = item.price || 0;
+    const total = qty * price;
+
+    grandTotal += total;
+
+    doc
+      .rect(45, y, 505, 32)
+      .fill(index % 2 === 0 ? "#f8fafc" : "#ffffff");
+
+    doc.fillColor("#111827").fontSize(10);
+    doc.text(index + 1, 55, y + 10);
+    doc.text(productName, 95, y + 10, {
+      width: 240,
+    });
+    doc.text(qty, 360, y + 10);
+    doc.text(formatCurrency(price), 400, y + 10);
+    doc.text(formatCurrency(total), 490, y + 10);
+
+    y += 32;
   });
 
-  doc.moveDown();
-
-  doc.fontSize(16).text(`Total Amount: ₹${order.totalPrice}`, {
-    align: "right",
-  });
-
-  doc.moveDown();
+  y += 20;
 
   doc
-    .fontSize(12)
-    .text("Thank you for shopping with Sasikumar Electronics.", {
-      align: "center",
-    });
+    .rect(355, y, 195, 42)
+    .fill("#f97316");
+
+  doc
+    .fillColor("#ffffff")
+    .fontSize(14)
+    .text(`Grand Total: ${formatCurrency(grandTotal || order.totalPrice)}`, 370, y + 14);
+
+  y += 80;
+
+  doc
+    .fillColor("#374151")
+    .fontSize(11)
+    .text("Thank you for shopping with Sasikumar Electronics.", 45, y);
+
+  doc
+    .fontSize(10)
+    .fillColor("#6b7280")
+    .text("This is a system generated invoice.", 45, y + 20);
 
   doc.end();
 

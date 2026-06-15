@@ -1,190 +1,298 @@
-import {
- useEffect,
- useState,
-} from "react";
-
+import { useEffect, useState } from "react";
 import API from "../api/axios";
-
-import {
- useNavigate,
-} from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const Products = () => {
- const [products, setProducts] = useState([]);
- const [loading, setLoading] = useState(true);
- const [keyword, setKeyword] = useState("");
+  const [products, setProducts] = useState([]);
+  const [keyword, setKeyword] = useState("");
+  const [loading, setLoading] = useState(true);
 
- const navigate = useNavigate();
+  const [reviewProduct, setReviewProduct] = useState(null);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    comment: "",
+  });
 
- useEffect(() => {
-  fetchProducts();
- }, []);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
- const fetchProducts = async () => {
-  try {
-   const res = await API.get("/products");
-   setProducts(res.data.products || []);
-  } catch (error) {
-   console.log(error);
-  } finally {
-   setLoading(false);
-  }
- };
+  useEffect(() => {
+    const searchValue = searchParams.get("search") || "";
+    setKeyword(searchValue);
+    fetchProducts(searchValue);
+  }, [searchParams]);
 
- const addToCart = async (productId) => {
-  try {
-   const user = JSON.parse(localStorage.getItem("user"));
+  const fetchProducts = async (search = "") => {
+    try {
+      setLoading(true);
 
-   if (!user) {
-    alert("Please login first");
-    navigate("/login");
-    return;
-   }
+      const res = await API.get(
+        search
+          ? `/products?keyword=${search}`
+          : "/products"
+      );
 
-   await API.post("/cart/add", {
-    productId,
-    quantity: 1,
-   });
+      setProducts(res.data.products || []);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-   alert("Product added to cart");
-   navigate("/cart");
-  } catch (error) {
-   alert(
-    error.response?.data?.message ||
-    "Failed to add product to cart"
-   );
-  }
- };
+  const addToCart = async (productId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
 
- const addToWishlist = async (productId) => {
-  try {
-   const user = JSON.parse(localStorage.getItem("user"));
+      if (!user) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
 
-   if (!user) {
-    alert("Please login first");
-    navigate("/login");
-    return;
-   }
+      await API.post("/cart/add", {
+        productId,
+        quantity: 1,
+      });
 
-   await API.post("/wishlist/add", {
-    productId,
-   });
+      alert("Product added to cart");
+      navigate("/cart");
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Failed to add product to cart"
+      );
+    }
+  };
 
-   alert("Product added to wishlist");
-   navigate("/wishlist");
-  } catch (error) {
-   alert(
-    error.response?.data?.message ||
-    "Failed to add product to wishlist"
-   );
-  }
- };
+  const addToWishlist = async (productId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
 
- const filteredProducts = products.filter(
-  product =>
-   product.name
-    .toLowerCase()
-    .includes(keyword.toLowerCase()) ||
-   product.category
-    .toLowerCase()
-    .includes(keyword.toLowerCase()) ||
-   product.brand
-    ?.toLowerCase()
-    .includes(keyword.toLowerCase())
- );
+      if (!user) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
 
- return (
-  <div className="products-page">
-   <div className="products-header">
-    <div>
-     <h1>Latest Electronics</h1>
-     <p>Shop mobiles, laptops, gadgets and accessories</p>
-    </div>
+      await API.post("/wishlist/add", {
+        productId,
+      });
 
-    <input
-     type="text"
-     placeholder="Search products..."
-     value={keyword}
-     onChange={(e) => setKeyword(e.target.value)}
-    />
-   </div>
+      alert("Product added to wishlist");
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Failed to add product to wishlist"
+      );
+    }
+  };
 
-   {loading ? (
-    <div className="product-grid">
-     {[1, 2, 3, 4].map((item) => (
-      <div className="skeleton-card" key={item}></div>
-     ))}
-    </div>
-   ) : filteredProducts.length === 0 ? (
-    <h2>No products found</h2>
-   ) : (
-    <div className="product-grid">
-     {filteredProducts.map((product) => (
-      <div className="product-card" key={product._id}>
-       <div className="product-badge">
-        {product.stock > 0 ? "Available" : "Out of Stock"}
-       </div>
+  const searchProducts = () => {
+    navigate(
+      keyword.trim()
+        ? `/products?search=${keyword}`
+        : "/products"
+    );
+  };
 
-       <div className="product-img-box">
-        <img
-         src={
-          product.images?.[0]?.url ||
-          "/favicon.svg"
-         }
-         alt={product.name}
-        />
-       </div>
+  const submitReview = async () => {
+    try {
+      if (!reviewProduct) return;
 
-       <div className="product-info">
-        <p className="product-category">
-         {product.category}
-        </p>
+      await API.post("/reviews", {
+        product: reviewProduct._id,
+        rating: Number(reviewForm.rating),
+        comment: reviewForm.comment,
+      });
 
-        <h3>{product.name}</h3>
+      alert("Review submitted successfully");
 
-        <div className="rating-row">
-         ⭐⭐⭐⭐☆ <span>4.5</span>
+      setReviewProduct(null);
+      setReviewForm({
+        rating: 5,
+        comment: "",
+      });
+
+      fetchProducts(keyword);
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Please login to add review"
+      );
+    }
+  };
+
+  return (
+    <div className="products-page">
+      <div className="products-header industrial-products-header">
+        <div>
+          <h1>Industrial & Automobile Electronics</h1>
+          <p>
+            Bike accessories, car electricals, LED lights, wiring,
+            switches and workshop essentials
+          </p>
         </div>
 
-        <p className="price">
-         ₹{product.price}
-        </p>
+        <div className="product-search-line">
+          <input
+            type="text"
+            placeholder="Search bike light, car horn, wire, switch..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") searchProducts();
+            }}
+          />
 
-        <p
-         className={
-          product.stock > 0
-           ? "stock"
-           : "out-stock"
-         }
-        >
-         {product.stock > 0
-          ? `In Stock (${product.stock})`
-          : "Out Of Stock"}
-        </p>
-
-        <div className="product-actions">
-         <button
-          className="cart-btn"
-          disabled={product.stock <= 0}
-          onClick={() => addToCart(product._id)}
-         >
-          Add To Cart
-         </button>
-
-         <button
-          className="wish-btn"
-          onClick={() => addToWishlist(product._id)}
-         >
-          ❤️
-         </button>
+          <button onClick={searchProducts}>
+            Search
+          </button>
         </div>
-       </div>
       </div>
-     ))}
+
+      {loading ? (
+        <div className="product-grid">
+          {[1, 2, 3, 4].map((item) => (
+            <div className="skeleton-card" key={item}></div>
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <h2>No products found</h2>
+      ) : (
+        <div className="product-grid">
+          {products.map((product) => (
+            <div className="product-card pro-product-card" key={product._id}>
+              <div className="product-badge">
+                {product.stock > 0 ? "In Stock" : "Out of Stock"}
+              </div>
+
+              <div className="product-img-box">
+                <img
+                  src={
+                    product.images?.[0]?.url ||
+                    "/favicon.svg"
+                  }
+                  alt={product.name}
+                />
+              </div>
+
+              <div className="product-info">
+                <p className="product-category">
+                  {product.category}
+                </p>
+
+                <h3>{product.name}</h3>
+
+                <p className="product-desc">
+                  {product.description}
+                </p>
+
+                <div className="rating-row">
+                  ⭐ {product.ratings || 0}
+                  <span>
+                    ({product.numReviews || 0} reviews)
+                  </span>
+                </div>
+
+                <p className="price">
+                  ₹{product.price}
+                </p>
+
+                <p
+                  className={
+                    product.stock > 0
+                      ? "stock"
+                      : "out-stock"
+                  }
+                >
+                  {product.stock > 0
+                    ? `Available (${product.stock})`
+                    : "Currently unavailable"}
+                </p>
+
+                <div className="product-actions">
+                  <button
+                    className="cart-btn"
+                    disabled={product.stock <= 0}
+                    onClick={() => addToCart(product._id)}
+                  >
+                    Add To Cart
+                  </button>
+
+                  <button
+                    className="wish-btn"
+                    onClick={() => addToWishlist(product._id)}
+                  >
+                    ❤️
+                  </button>
+                </div>
+
+                <button
+                  className="review-open-btn"
+                  onClick={() => setReviewProduct(product)}
+                >
+                  Rate / Comment
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {reviewProduct && (
+        <div className="review-modal-bg">
+          <div className="review-modal">
+            <h2>Review Product</h2>
+
+            <p>{reviewProduct.name}</p>
+
+            <label>Rating</label>
+            <select
+              value={reviewForm.rating}
+              onChange={(e) =>
+                setReviewForm({
+                  ...reviewForm,
+                  rating: e.target.value,
+                })
+              }
+            >
+              <option value="5">5 - Excellent</option>
+              <option value="4">4 - Good</option>
+              <option value="3">3 - Average</option>
+              <option value="2">2 - Poor</option>
+              <option value="1">1 - Bad</option>
+            </select>
+
+            <label>Comment</label>
+            <textarea
+              placeholder="Write your experience..."
+              value={reviewForm.comment}
+              onChange={(e) =>
+                setReviewForm({
+                  ...reviewForm,
+                  comment: e.target.value,
+                })
+              }
+            />
+
+            <div className="review-modal-actions">
+              <button onClick={submitReview}>
+                Submit Review
+              </button>
+
+              <button
+                className="cancel-review"
+                onClick={() => setReviewProduct(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-   )}
-  </div>
- );
+  );
 };
 
 export default Products;

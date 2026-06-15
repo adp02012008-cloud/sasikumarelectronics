@@ -39,7 +39,6 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     },
-
     credentials: true,
   })
 );
@@ -51,7 +50,6 @@ SECURITY + PERFORMANCE
 */
 
 app.use(helmet());
-
 app.use(compression());
 
 app.use(
@@ -75,10 +73,15 @@ PASSPORT GOOGLE AUTH
 
 app.use(passport.initialize());
 
+/*
+=========================
+RATE LIMITER
+=========================
+*/
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-
   message: {
     success: false,
     message: "Too many requests, please try again later",
@@ -126,6 +129,7 @@ const userRoutes = require("./routes/userRoutes");
 const couponRoutes = require("./routes/couponRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const searchRoutes = require("./routes/searchRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 /*
 =========================
@@ -145,6 +149,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 /*
 =========================

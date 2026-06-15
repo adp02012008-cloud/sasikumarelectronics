@@ -1,87 +1,89 @@
-const Review =
-  require("../models/Review");
+const Review = require("../models/Review");
+const Product = require("../models/Product");
 
-const Product =
-  require("../models/Product");
+const updateProductRating = async (productId) => {
+  const reviews = await Review.find({
+    product: productId,
+  });
 
-exports.addReview =
-  async (req, res) => {
-    try {
+  const avg =
+    reviews.length === 0
+      ? 0
+      : reviews.reduce((acc, item) => acc + item.rating, 0) /
+        reviews.length;
 
-      const {
-        user,
-        product,
-        rating,
-        comment,
-      } = req.body;
+  await Product.findByIdAndUpdate(productId, {
+    ratings: Number(avg.toFixed(1)),
+    numReviews: reviews.length,
+  });
+};
 
-      const review =
-        await Review.create({
-          user,
-          product,
-          rating,
-          comment,
-        });
+exports.addReview = async (req, res) => {
+  try {
+    const {
+      product,
+      rating,
+      comment,
+    } = req.body;
 
-      const reviews =
-        await Review.find({
-          product,
-        });
+    const existingReview = await Review.findOne({
+      user: req.user.id,
+      product,
+    });
 
-      const avg =
-        reviews.reduce(
-          (acc, item) =>
-            acc + item.rating,
-          0
-        ) / reviews.length;
+    if (existingReview) {
+      existingReview.rating = rating;
+      existingReview.comment = comment;
+      await existingReview.save();
 
-      await Product.findByIdAndUpdate(
-        product,
-        {
-          ratings: avg,
-          numReviews:
-            reviews.length,
-        }
-      );
+      await updateProductRating(product);
 
-      res.status(201).json({
+      return res.status(200).json({
         success: true,
-        review,
+        message: "Review Updated",
+        review: existingReview,
       });
-
-    } catch (error) {
-
-      res.status(500).json({
-        message:
-          error.message,
-      });
-
     }
-  };
 
-exports.getReviews =
-  async (req, res) => {
-    try {
+    const review = await Review.create({
+      user: req.user.id,
+      product,
+      rating,
+      comment,
+    });
 
-      const reviews =
-        await Review.find({
-          product:
-            req.params.productId,
-        }).populate(
-          "user"
-        );
+    await updateProductRating(product);
 
-      res.json({
-        success: true,
-        reviews,
-      });
+    res.status(201).json({
+      success: true,
+      message: "Review Added",
+      review,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-    } catch (error) {
+exports.getReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find({
+      product: req.params.productId,
+    })
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
 
-      res.status(500).json({
-        message:
-          error.message,
-      });
-
-    }
-  };
+    res.status(200).json({
+      success: true,
+      count: reviews.length,
+      reviews,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
