@@ -11,6 +11,7 @@ const ProductDetails = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
 
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
@@ -116,17 +117,25 @@ const ProductDetails = () => {
         return;
       }
 
-      if (isWishlisted) {
+      if (wishlistBusy) return;
+
+      setWishlistBusy(true);
+
+      const oldValue = isWishlisted;
+      setIsWishlisted(!oldValue);
+
+      if (oldValue) {
         await API.delete(`/wishlist/${id}`);
-        setIsWishlisted(false);
       } else {
         await API.post("/wishlist/add", {
           productId: id,
         });
-        setIsWishlisted(true);
       }
     } catch (error) {
+      checkWishlistStatus();
       alert(error.response?.data?.message || "Wishlist failed");
+    } finally {
+      setWishlistBusy(false);
     }
   };
 
@@ -192,12 +201,8 @@ const ProductDetails = () => {
           <div className="big-image-box">
             <button
               className={`floating-heart ${isWishlisted ? "saved" : ""}`}
+              disabled={wishlistBusy}
               onClick={toggleWishlist}
-              title={
-                isWishlisted
-                  ? "Remove from wishlist"
-                  : "Save to wishlist"
-              }
             >
               {isWishlisted ? "♥" : "♡"}
             </button>
@@ -298,6 +303,7 @@ const ProductDetails = () => {
 
           <button
             className={`wishlist-wide ${isWishlisted ? "saved" : ""}`}
+            disabled={wishlistBusy}
             onClick={toggleWishlist}
           >
             {isWishlisted ? "Saved in Wishlist ♥" : "Add to Wish List"}

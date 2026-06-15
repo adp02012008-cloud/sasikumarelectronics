@@ -18,6 +18,8 @@ connectDB();
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 /*
 =========================
 CORS SETUP
@@ -79,16 +81,19 @@ RATE LIMITER
 =========================
 */
 
-const limiter = rateLimit({
+const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === "OPTIONS",
   message: {
     success: false,
     message: "Too many requests, please try again later",
   },
 });
 
-app.use(limiter);
+app.use("/api", apiLimiter);
 
 /*
 =========================
@@ -109,6 +114,13 @@ HOME ROUTE
 
 app.get("/", (req, res) => {
   res.send("API Running");
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Backend is healthy",
+  });
 });
 
 /*
@@ -164,6 +176,21 @@ cron.schedule("0 * * * *", () => {
 });
 
 console.log("Dynamic Pricing Scheduler Started");
+
+/*
+=========================
+ERROR HANDLER
+=========================
+*/
+
+app.use((err, req, res, next) => {
+  console.log("Server Error:", err.message);
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
 
 /*
 =========================

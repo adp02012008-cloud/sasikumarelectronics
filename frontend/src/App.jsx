@@ -23,6 +23,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import Navbar from "./components/Navbar";
 
 import "./App.css";
+import "./mobile-fixes.css";
 
 function App() {
   return (

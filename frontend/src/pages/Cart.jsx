@@ -13,15 +13,18 @@ const Cart = () => {
     fetchCart();
   }, []);
 
+  const validCart = useMemo(() => {
+    return cart.filter((item) => item.product);
+  }, [cart]);
+
   const selectedCartItems = useMemo(() => {
-    return cart.filter((item) =>
+    return validCart.filter((item) =>
       selectedItems.includes(item.product._id)
     );
-  }, [cart, selectedItems]);
+  }, [validCart, selectedItems]);
 
   const itemsTotal = selectedCartItems.reduce(
-    (sum, item) =>
-      sum + item.product.price * item.quantity,
+    (sum, item) => sum + item.product.price * item.quantity,
     0
   );
 
@@ -36,7 +39,9 @@ const Cart = () => {
 
       setCart(items);
       setSelectedItems(
-        items.map((item) => item.product._id)
+        items
+          .filter((item) => item.product)
+          .map((item) => item.product._id)
       );
     } catch (error) {
       console.log(error);
@@ -54,9 +59,7 @@ const Cart = () => {
         `/delivery/calculate?subtotal=${itemsTotal}`
       );
 
-      setDeliveryCharge(
-        res.data.deliveryCharge || 0
-      );
+      setDeliveryCharge(res.data.deliveryCharge || 0);
     } catch (error) {
       console.log(error);
       setDeliveryCharge(0);
@@ -72,12 +75,10 @@ const Cart = () => {
   };
 
   const toggleAll = () => {
-    if (selectedItems.length === cart.length) {
+    if (selectedItems.length === validCart.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(
-        cart.map((item) => item.product._id)
-      );
+      setSelectedItems(validCart.map((item) => item.product._id));
     }
   };
 
@@ -92,6 +93,8 @@ const Cart = () => {
 
   const updateQty = async (productId, quantity) => {
     try {
+      if (quantity < 1) return;
+
       await API.put("/cart/update", {
         productId,
         quantity,
@@ -106,8 +109,7 @@ const Cart = () => {
     }
   };
 
-  const marketplaceFee =
-    itemsTotal > 0 ? 5 : 0;
+  const marketplaceFee = itemsTotal > 0 ? 5 : 0;
 
   const orderTotal =
     itemsTotal + deliveryCharge + marketplaceFee;
@@ -131,13 +133,14 @@ const Cart = () => {
       <div className="cart-top-box">
         <h1>Shopping Cart</h1>
 
-        {cart.length > 0 && (
+        {validCart.length > 0 && (
           <>
             <label className="select-all-row">
               <input
                 type="checkbox"
                 checked={
-                  selectedItems.length === cart.length
+                  selectedItems.length === validCart.length &&
+                  validCart.length > 0
                 }
                 onChange={toggleAll}
               />
@@ -159,9 +162,10 @@ const Cart = () => {
         )}
       </div>
 
-      {cart.length === 0 ? (
+      {validCart.length === 0 ? (
         <div className="empty-cart-box">
           <h2>Your cart is empty</h2>
+
           <Link to="/products">
             Continue Shopping
           </Link>
@@ -169,51 +173,44 @@ const Cart = () => {
       ) : (
         <div className="cart-layout">
           <div className="cart-list">
-            {cart.map((item) => {
-              const isSelected =
-                selectedItems.includes(
-                  item.product._id
-                );
+            {validCart.map((item) => {
+              const product = item.product;
+              const isSelected = selectedItems.includes(product._id);
 
               return (
                 <div
                   className={`cart-item pro-cart-item ${
-                    isSelected
-                      ? "selected-cart-item"
-                      : ""
+                    isSelected ? "selected-cart-item" : ""
                   }`}
                   key={item._id}
                 >
-                  <button
-                    className={`cart-check ${
-                      isSelected ? "checked" : ""
-                    }`}
-                    onClick={() =>
-                      toggleItem(item.product._id)
-                    }
-                  >
-                    {isSelected ? "✓" : ""}
-                  </button>
+                  <div className="cart-image-wrap">
+                    <button
+                      className={`cart-check overlay-check ${
+                        isSelected ? "checked" : ""
+                      }`}
+                      onClick={() => toggleItem(product._id)}
+                    >
+                      {isSelected ? "✓" : ""}
+                    </button>
 
-                  <img
-                    src={
-                      item.product.images?.[0]?.url ||
-                      "/favicon.svg"
-                    }
-                    alt={item.product.name}
-                  />
+                    <img
+                      src={product.images?.[0]?.url || "/favicon.svg"}
+                      alt={product.name}
+                    />
+                  </div>
 
                   <div className="cart-info">
-                    <h3>{item.product.name}</h3>
+                    <h3>{product.name}</h3>
 
                     <p className="cart-category">
-                      {item.product.category}
+                      {product.category}
                     </p>
 
-                    <h2>₹{item.product.price}</h2>
+                    <h2>₹{product.price}</h2>
 
                     <p className="cart-stock">
-                      In stock
+                      {product.stock > 0 ? "In stock" : "Out of stock"}
                     </p>
 
                     <p className="cart-return">
@@ -225,14 +222,9 @@ const Cart = () => {
                         <button
                           onClick={() => {
                             if (item.quantity <= 1) {
-                              removeItem(
-                                item.product._id
-                              );
+                              removeItem(product._id);
                             } else {
-                              updateQty(
-                                item.product._id,
-                                item.quantity - 1
-                              );
+                              updateQty(product._id, item.quantity - 1);
                             }
                           }}
                         >
@@ -243,10 +235,7 @@ const Cart = () => {
 
                         <button
                           onClick={() =>
-                            updateQty(
-                              item.product._id,
-                              item.quantity + 1
-                            )
+                            updateQty(product._id, item.quantity + 1)
                           }
                         >
                           +
@@ -255,9 +244,7 @@ const Cart = () => {
 
                       <button
                         className="cart-delete-btn"
-                        onClick={() =>
-                          removeItem(item.product._id)
-                        }
+                        onClick={() => removeItem(product._id)}
                       >
                         Delete
                       </button>
@@ -294,13 +281,12 @@ const Cart = () => {
               <span>₹{marketplaceFee}</span>
             </p>
 
-            {deliveryCharge === 0 &&
-              itemsTotal > 0 && (
-                <p className="saving-line">
-                  FREE Delivery
-                  <span>FREE</span>
-                </p>
-              )}
+            {deliveryCharge === 0 && itemsTotal > 0 && (
+              <p className="saving-line">
+                FREE Delivery
+                <span>FREE</span>
+              </p>
+            )}
 
             <h2>
               Order Total:

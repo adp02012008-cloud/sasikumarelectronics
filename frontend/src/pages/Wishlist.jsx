@@ -36,6 +36,7 @@ const Wishlist = () => {
       });
 
       alert("Added to cart");
+      navigate("/cart");
     } catch (error) {
       alert(error.response?.data?.message || "Failed to add cart");
     }
@@ -46,15 +47,24 @@ const Wishlist = () => {
       <aside className="account-sidebar">
         <div className="account-user">
           <div className="avatar">👤</div>
+
           <div>
             <p>Hello,</p>
             <h3>Customer</h3>
           </div>
         </div>
 
-        <button onClick={() => navigate("/orders")}>📦 My Orders</button>
-        <button className="active">❤️ My Wishlist</button>
-        <button onClick={() => navigate("/cart")}>🛒 My Cart</button>
+        <button onClick={() => navigate("/orders")}>
+          📦 My Orders
+        </button>
+
+        <button className="active">
+          ❤️ My Wishlist
+        </button>
+
+        <button onClick={() => navigate("/cart")}>
+          🛒 My Cart
+        </button>
       </aside>
 
       <main className="wishlist-page pro-wishlist-page">
@@ -65,6 +75,7 @@ const Wishlist = () => {
         {wishlist.length === 0 ? (
           <div className="empty-box">
             <h2>Wishlist Empty</h2>
+
             <button onClick={() => navigate("/products")}>
               Continue Shopping
             </button>
@@ -92,10 +103,15 @@ const Wishlist = () => {
 
                   <h2>₹{product.price}</h2>
 
-                  <span className="green-text">In stock</span>
+                  <span className="green-text">
+                    {product.stock > 0 ? "In stock" : "Out of stock"}
+                  </span>
 
                   <div className="wishlist-actions">
-                    <button onClick={() => addToCart(product._id)}>
+                    <button
+                      disabled={product.stock <= 0}
+                      onClick={() => addToCart(product._id)}
+                    >
                       Add to Cart
                     </button>
 
@@ -107,13 +123,6 @@ const Wishlist = () => {
                     </button>
                   </div>
                 </div>
-
-                <button
-                  className="trash-btn"
-                  onClick={() => removeWishlist(product._id)}
-                >
-                  🗑
-                </button>
               </div>
             ))}
           </div>

@@ -7,6 +7,7 @@ const Products = () => {
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
   const [wishlistIds, setWishlistIds] = useState([]);
+  const [wishlistBusy, setWishlistBusy] = useState([]);
 
   const [reviewProduct, setReviewProduct] = useState(null);
 
@@ -106,25 +107,39 @@ const Products = () => {
         return;
       }
 
+      if (wishlistBusy.includes(productId)) {
+        return;
+      }
+
       const alreadySaved = wishlistIds.includes(productId);
+
+      setWishlistBusy((prev) => [...prev, productId]);
+
+      setWishlistIds((prev) => {
+        if (alreadySaved) {
+          return prev.filter((id) => id !== productId);
+        }
+
+        return [...new Set([...prev, productId])];
+      });
 
       if (alreadySaved) {
         await API.delete(`/wishlist/${productId}`);
-
-        setWishlistIds((prev) =>
-          prev.filter((id) => id !== productId)
-        );
       } else {
         await API.post("/wishlist/add", {
           productId,
         });
-
-        setWishlistIds((prev) => [...prev, productId]);
       }
     } catch (error) {
+      fetchWishlistIds();
+
       alert(
         error.response?.data?.message ||
           "Wishlist update failed"
+      );
+    } finally {
+      setWishlistBusy((prev) =>
+        prev.filter((id) => id !== productId)
       );
     }
   };
@@ -218,22 +233,22 @@ const Products = () => {
                 </div>
 
                 <button
+                  type="button"
                   className={`card-heart-btn ${saved ? "saved" : ""}`}
+                  disabled={wishlistBusy.includes(product._id)}
+                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     toggleWishlist(product._id);
                   }}
-                  title={saved ? "Remove from wishlist" : "Save to wishlist"}
                 >
                   {saved ? "♥" : "♡"}
                 </button>
 
                 <div className="product-img-box">
                   <img
-                    src={
-                      product.images?.[0]?.url ||
-                      "/favicon.svg"
-                    }
+                    src={product.images?.[0]?.url || "/favicon.svg"}
                     alt={product.name}
                   />
                 </div>
