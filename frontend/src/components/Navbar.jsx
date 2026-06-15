@@ -6,11 +6,12 @@ import logo from "../assets/logo.png";
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
-
   const navigate = useNavigate();
 
   const [keyword, setKeyword] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -28,7 +29,7 @@ const Navbar = () => {
       }
 
       const res = await API.get(
-        `/products/suggestions?keyword=${keyword}`
+        `/products/suggestions?keyword=${encodeURIComponent(keyword)}`
       );
 
       setSuggestions(res.data.suggestions || []);
@@ -40,7 +41,7 @@ const Navbar = () => {
   const searchHandler = () => {
     if (!keyword.trim()) return;
 
-    navigate(`/products?search=${keyword}`);
+    navigate(`/products?search=${encodeURIComponent(keyword.trim())}`);
     setSuggestions([]);
   };
 
@@ -61,9 +62,9 @@ const Navbar = () => {
         <div className="nav-container">
           <Link to="/" className="brand-logo">
             <img
-                src={logo}
-                alt="Sasikumar Electronics Logo"
-                className="website-logo"
+              src={logo}
+              alt="Sasikumar Electronics"
+              className="website-logo"
             />
           </Link>
 
@@ -75,7 +76,7 @@ const Navbar = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") searchHandler();
                 }}
-                placeholder="Search bike lights, car accessories, electrical products..."
+                placeholder="Search bike lights, car accessories, electronics..."
               />
 
               <button onClick={searchHandler}>Search</button>
@@ -108,13 +109,7 @@ const Navbar = () => {
 
           <div className="nav-account">
             {user ? (
-              <>
-                <span className="hello-user">
-                  Hello, <b>{user.name}</b>
-                </span>
-
-                <button onClick={handleLogout}>Logout</button>
-              </>
+              <button onClick={handleLogout}>Logout</button>
             ) : (
               <>
                 <Link to="/login">Login</Link>
@@ -129,26 +124,26 @@ const Navbar = () => {
         <Link to="/">Home</Link>
         <Link to="/products">Products</Link>
 
-        {user && (
+        {user && !isAdmin && (
           <>
-            <Link to="/wishlist">❤️ Wishlist</Link>
-            <Link to="/cart">🛒 Cart</Link>
+            <Link to="/wishlist">Wishlist</Link>
+            <Link to="/cart">Cart</Link>
             <Link to="/orders">Orders</Link>
           </>
         )}
 
-        {user?.role === "admin" && (
+        {isAdmin && (
           <>
             <Link className="admin-link" to="/admin">
               Dashboard
             </Link>
 
             <Link className="admin-link" to="/admin/products">
-              Add Products
+              Products
             </Link>
 
             <Link className="admin-link" to="/admin/orders">
-              Manage Orders
+              Orders
             </Link>
 
             <Link className="admin-link" to="/admin/users">
@@ -156,7 +151,7 @@ const Navbar = () => {
             </Link>
 
             <Link className="admin-link" to="/admin/delivery">
-                Delivery
+              Delivery
             </Link>
 
             <Link className="admin-link" to="/admin/analytics">
@@ -166,12 +161,83 @@ const Navbar = () => {
         )}
       </nav>
 
-      <nav className="mobile-bottom-nav">
-        <Link to="/">🏠<span>Home</span></Link>
-        <Link to="/products">🔎<span>Shop</span></Link>
-        <Link to="/cart">🛒<span>Cart</span></Link>
-        <Link to="/orders">📦<span>Orders</span></Link>
-        <Link to="/wishlist">❤️<span>Wishlist</span></Link>
+      <nav className={`mobile-bottom-nav ${isAdmin ? "admin-mobile-nav" : ""}`}>
+        {!user && (
+          <>
+            <Link to="/">
+              🏠
+              <span>Home</span>
+            </Link>
+
+            <Link to="/products">
+              🔎
+              <span>Shop</span>
+            </Link>
+
+            <Link to="/login">
+              👤
+              <span>Login</span>
+            </Link>
+          </>
+        )}
+
+        {user && !isAdmin && (
+          <>
+            <Link to="/">
+              🏠
+              <span>Home</span>
+            </Link>
+
+            <Link to="/products">
+              🔎
+              <span>Shop</span>
+            </Link>
+
+            <Link to="/cart">
+              🛒
+              <span>Cart</span>
+            </Link>
+
+            <Link to="/orders">
+              📦
+              <span>Orders</span>
+            </Link>
+
+            <Link to="/wishlist">
+              ❤️
+              <span>Wishlist</span>
+            </Link>
+          </>
+        )}
+
+        {isAdmin && (
+          <>
+            <Link to="/admin">
+              📊
+              <span>Home</span>
+            </Link>
+
+            <Link to="/admin/products">
+              ➕
+              <span>Products</span>
+            </Link>
+
+            <Link to="/admin/orders">
+              📦
+              <span>Orders</span>
+            </Link>
+
+            <Link to="/admin/users">
+              👥
+              <span>Users</span>
+            </Link>
+
+            <Link to="/admin/analytics">
+              📈
+              <span>Stats</span>
+            </Link>
+          </>
+        )}
       </nav>
     </>
   );

@@ -6,8 +6,10 @@ const Products = () => {
   const [products, setProducts] = useState([]);
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
+  const [wishlistIds, setWishlistIds] = useState([]);
 
   const [reviewProduct, setReviewProduct] = useState(null);
+
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
     comment: "",
@@ -18,9 +20,19 @@ const Products = () => {
 
   useEffect(() => {
     const searchValue = searchParams.get("search") || "";
+
     setKeyword(searchValue);
     fetchProducts(searchValue);
+    fetchWishlistIds();
   }, [searchParams]);
+
+  const getLoggedUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  };
 
   const fetchProducts = async (search = "") => {
     try {
@@ -28,7 +40,7 @@ const Products = () => {
 
       const res = await API.get(
         search
-          ? `/products?keyword=${search}`
+          ? `/products?keyword=${encodeURIComponent(search)}`
           : "/products"
       );
 
@@ -40,9 +52,29 @@ const Products = () => {
     }
   };
 
+  const fetchWishlistIds = async () => {
+    try {
+      const user = getLoggedUser();
+
+      if (!user) {
+        setWishlistIds([]);
+        return;
+      }
+
+      const res = await API.get("/wishlist");
+
+      const ids =
+        res.data.wishlist?.products?.map((product) => product._id) || [];
+
+      setWishlistIds(ids);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const addToCart = async (productId) => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const user = getLoggedUser();
 
       if (!user) {
         alert("Please login first");
@@ -55,7 +87,6 @@ const Products = () => {
         quantity: 1,
       });
 
-      alert("Product added to cart");
       navigate("/cart");
     } catch (error) {
       alert(
@@ -65,9 +96,9 @@ const Products = () => {
     }
   };
 
-  const addToWishlist = async (productId) => {
+  const toggleWishlist = async (productId) => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const user = getLoggedUser();
 
       if (!user) {
         alert("Please login first");
@@ -75,15 +106,25 @@ const Products = () => {
         return;
       }
 
-      await API.post("/wishlist/add", {
-        productId,
-      });
+      const alreadySaved = wishlistIds.includes(productId);
 
-      alert("Product added to wishlist");
+      if (alreadySaved) {
+        await API.delete(`/wishlist/${productId}`);
+
+        setWishlistIds((prev) =>
+          prev.filter((id) => id !== productId)
+        );
+      } else {
+        await API.post("/wishlist/add", {
+          productId,
+        });
+
+        setWishlistIds((prev) => [...prev, productId]);
+      }
     } catch (error) {
       alert(
         error.response?.data?.message ||
-          "Failed to add product to wishlist"
+          "Wishlist update failed"
       );
     }
   };
@@ -91,7 +132,7 @@ const Products = () => {
   const searchProducts = () => {
     navigate(
       keyword.trim()
-        ? `/products?search=${keyword}`
+        ? `/products?search=${encodeURIComponent(keyword.trim())}`
         : "/products"
     );
   };
@@ -109,6 +150,7 @@ const Products = () => {
       alert("Review submitted successfully");
 
       setReviewProduct(null);
+
       setReviewForm({
         rating: 5,
         comment: "",
@@ -128,9 +170,10 @@ const Products = () => {
       <div className="products-header industrial-products-header">
         <div>
           <h1>Industrial & Automobile Electronics</h1>
+
           <p>
-            Bike accessories, car electricals, LED lights, wiring,
-            switches and workshop essentials
+            Bike accessories, car electricals, LED lights,
+            wiring, switches and workshop essentials
           </p>
         </div>
 
@@ -161,92 +204,100 @@ const Products = () => {
         <h2>No products found</h2>
       ) : (
         <div className="product-grid">
-          {products.map((product) => (
-            <div
-              className="product-card pro-product-card"
-              key={product._id}
-              onClick={() => navigate(`/products/${product._id}`)}
-            >
-              <div className="product-badge">
-                {product.stock > 0 ? "In Stock" : "Out of Stock"}
-              </div>
+          {products.map((product) => {
+            const saved = wishlistIds.includes(product._id);
 
-              <div className="product-img-box">
-                <img
-                  src={
-                    product.images?.[0]?.url ||
-                    "/favicon.svg"
-                  }
-                  alt={product.name}
-                />
-              </div>
-
-              <div className="product-info">
-                <p className="product-category">
-                  {product.category}
-                </p>
-
-                <h3>{product.name}</h3>
-
-                <p className="product-desc">
-                  {product.description}
-                </p>
-
-                <div className="rating-row">
-                  ⭐ {product.ratings || 0}
-                  <span>
-                    ({product.numReviews || 0} reviews)
-                  </span>
-                </div>
-
-                <p className="price">
-                  ₹{product.price}
-                </p>
-
-                <p
-                  className={
-                    product.stock > 0
-                      ? "stock"
-                      : "out-stock"
-                  }
-                >
-                  {product.stock > 0
-                    ? `Available (${product.stock})`
-                    : "Currently unavailable"}
-                </p>
-
-                <div
-                  className="product-actions"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    className="cart-btn"
-                    disabled={product.stock <= 0}
-                    onClick={() => addToCart(product._id)}
-                  >
-                    Add To Cart
-                  </button>
-
-                  <button
-                    className="wish-btn"
-                    onClick={() => addToWishlist(product._id)}
-                  >
-                    ❤️
-                  </button>
+            return (
+              <div
+                className="product-card pro-product-card"
+                key={product._id}
+                onClick={() => navigate(`/products/${product._id}`)}
+              >
+                <div className="product-badge">
+                  {product.stock > 0 ? "In Stock" : "Out of Stock"}
                 </div>
 
                 <button
-                  className="review-open-btn"
+                  className={`card-heart-btn ${saved ? "saved" : ""}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setReviewProduct(product);
+                    toggleWishlist(product._id);
                   }}
+                  title={saved ? "Remove from wishlist" : "Save to wishlist"}
                 >
-                  Rate / Comment
+                  {saved ? "♥" : "♡"}
                 </button>
+
+                <div className="product-img-box">
+                  <img
+                    src={
+                      product.images?.[0]?.url ||
+                      "/favicon.svg"
+                    }
+                    alt={product.name}
+                  />
+                </div>
+
+                <div className="product-info">
+                  <p className="product-category">
+                    {product.category}
+                  </p>
+
+                  <h3>{product.name}</h3>
+
+                  <p className="product-desc">
+                    {product.description}
+                  </p>
+
+                  <div className="rating-row">
+                    ⭐ {product.ratings || 0}
+                    <span>
+                      ({product.numReviews || 0} reviews)
+                    </span>
+                  </div>
+
+                  <p className="price">
+                    ₹{product.price}
+                  </p>
+
+                  <p
+                    className={
+                      product.stock > 0
+                        ? "stock"
+                        : "out-stock"
+                    }
+                  >
+                    {product.stock > 0
+                      ? `Available (${product.stock})`
+                      : "Currently unavailable"}
+                  </p>
+
+                  <div
+                    className="product-actions"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      className="cart-btn"
+                      disabled={product.stock <= 0}
+                      onClick={() => addToCart(product._id)}
+                    >
+                      Add To Cart
+                    </button>
+                  </div>
+
+                  <button
+                    className="review-open-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReviewProduct(product);
+                    }}
+                  >
+                    Rate / Comment
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -258,6 +309,7 @@ const Products = () => {
             <p>{reviewProduct.name}</p>
 
             <label>Rating</label>
+
             <select
               value={reviewForm.rating}
               onChange={(e) =>
@@ -275,6 +327,7 @@ const Products = () => {
             </select>
 
             <label>Comment</label>
+
             <textarea
               placeholder="Write your experience..."
               value={reviewForm.comment}

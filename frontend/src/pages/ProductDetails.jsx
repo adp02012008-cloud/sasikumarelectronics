@@ -10,6 +10,7 @@ const ProductDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
@@ -19,14 +20,25 @@ const ProductDetails = () => {
   useEffect(() => {
     fetchProduct();
     fetchReviews();
+    checkWishlistStatus();
   }, [id]);
+
+  const getLoggedUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  };
 
   const fetchProduct = async () => {
     try {
       const res = await API.get(`/products/${id}`);
 
       setProduct(res.data.product);
-      setSelectedImage(res.data.product.images?.[0]?.url || "/favicon.svg");
+      setSelectedImage(
+        res.data.product.images?.[0]?.url || "/favicon.svg"
+      );
     } catch (error) {
       console.log(error);
       alert("Product not found");
@@ -43,9 +55,31 @@ const ProductDetails = () => {
     }
   };
 
+  const checkWishlistStatus = async () => {
+    try {
+      const user = getLoggedUser();
+
+      if (!user) {
+        setIsWishlisted(false);
+        return;
+      }
+
+      const res = await API.get("/wishlist");
+
+      const saved =
+        res.data.wishlist?.products?.some(
+          (product) => product._id === id
+        ) || false;
+
+      setIsWishlisted(saved);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const addToCart = async (goCart = true) => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const user = getLoggedUser();
 
       if (!user) {
         alert("Please login first");
@@ -72,9 +106,9 @@ const ProductDetails = () => {
     await addToCart(true);
   };
 
-  const addToWishlist = async () => {
+  const toggleWishlist = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const user = getLoggedUser();
 
       if (!user) {
         alert("Please login first");
@@ -82,11 +116,15 @@ const ProductDetails = () => {
         return;
       }
 
-      await API.post("/wishlist/add", {
-        productId: id,
-      });
-
-      alert("Added to wishlist");
+      if (isWishlisted) {
+        await API.delete(`/wishlist/${id}`);
+        setIsWishlisted(false);
+      } else {
+        await API.post("/wishlist/add", {
+          productId: id,
+        });
+        setIsWishlisted(true);
+      }
     } catch (error) {
       alert(error.response?.data?.message || "Wishlist failed");
     }
@@ -152,8 +190,16 @@ const ProductDetails = () => {
           </div>
 
           <div className="big-image-box">
-            <button className="floating-heart" onClick={addToWishlist}>
-              ♡
+            <button
+              className={`floating-heart ${isWishlisted ? "saved" : ""}`}
+              onClick={toggleWishlist}
+              title={
+                isWishlisted
+                  ? "Remove from wishlist"
+                  : "Save to wishlist"
+              }
+            >
+              {isWishlisted ? "♥" : "♡"}
             </button>
 
             <img src={selectedImage} alt={product.name} />
@@ -201,7 +247,7 @@ const ProductDetails = () => {
 
             <div>
               <b>Invoice</b>
-              <p>GST style invoice available after order</p>
+              <p>Invoice available after order</p>
             </div>
           </div>
 
@@ -250,8 +296,11 @@ const ProductDetails = () => {
             Buy Now
           </button>
 
-          <button className="wishlist-wide" onClick={addToWishlist}>
-            Add to Wish List
+          <button
+            className={`wishlist-wide ${isWishlisted ? "saved" : ""}`}
+            onClick={toggleWishlist}
+          >
+            {isWishlisted ? "Saved in Wishlist ♥" : "Add to Wish List"}
           </button>
 
           <p className="secure-text">🔒 Secure transaction</p>
