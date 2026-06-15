@@ -7,6 +7,7 @@ const Checkout = () => {
 
   const [cart, setCart] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const [address, setAddress] = useState({
@@ -43,6 +44,38 @@ const Checkout = () => {
     }
   };
 
+  const itemsTotal = useMemo(() => {
+    return cart.reduce(
+      (sum, item) =>
+        sum + item.product.price * item.quantity,
+      0
+    );
+  }, [cart]);
+
+  useEffect(() => {
+    calculateDeliveryCharge();
+  }, [itemsTotal]);
+
+  const calculateDeliveryCharge = async () => {
+    try {
+      if (itemsTotal <= 0) {
+        setDeliveryCharge(0);
+        return;
+      }
+
+      const res = await API.get(
+        `/delivery/calculate?subtotal=${itemsTotal}`
+      );
+
+      setDeliveryCharge(
+        res.data.deliveryCharge || 0
+      );
+    } catch (error) {
+      console.log(error);
+      setDeliveryCharge(0);
+    }
+  };
+
   const handleAddressChange = (e) => {
     setAddress({
       ...address,
@@ -50,17 +83,8 @@ const Checkout = () => {
     });
   };
 
-  const itemsTotal = useMemo(() => {
-    return cart.reduce(
-      (sum, item) => sum + item.product.price * item.quantity,
-      0
-    );
-  }, [cart]);
-
-  const deliveryCharge =
-    itemsTotal > 0 && itemsTotal < 1000 ? 80 : 0;
-
-  const marketplaceFee = itemsTotal > 0 ? 5 : 0;
+  const marketplaceFee =
+    itemsTotal > 0 ? 5 : 0;
 
   const total =
     itemsTotal + deliveryCharge + marketplaceFee;
@@ -88,7 +112,9 @@ const Checkout = () => {
 
   const handlePayment = async () => {
     if (cart.length === 0) {
-      alert("No selected items found. Go back to cart and select items.");
+      alert(
+        "No selected items found. Go back to cart and select items."
+      );
       navigate("/cart");
       return;
     }
@@ -100,9 +126,12 @@ const Checkout = () => {
     try {
       setLoading(true);
 
-      const { data } = await API.post("/payment/create-order", {
-        amount: total,
-      });
+      const { data } = await API.post(
+        "/payment/create-order",
+        {
+          amount: total,
+        }
+      );
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -115,9 +144,12 @@ const Checkout = () => {
         handler: async function (response) {
           try {
             await API.post("/payment/verify", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+              razorpay_order_id:
+                response.razorpay_order_id,
+              razorpay_payment_id:
+                response.razorpay_payment_id,
+              razorpay_signature:
+                response.razorpay_signature,
             });
 
             await API.post("/orders", {
@@ -131,8 +163,10 @@ const Checkout = () => {
               paymentMethod: "Razorpay",
 
               paymentInfo: {
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId:
+                  response.razorpay_order_id,
+                razorpayPaymentId:
+                  response.razorpay_payment_id,
               },
 
               totalPrice: total,
@@ -173,11 +207,16 @@ const Checkout = () => {
         },
       };
 
-      const razorpay = new window.Razorpay(options);
+      const razorpay =
+        new window.Razorpay(options);
+
       razorpay.open();
     } catch (error) {
       console.log(error);
-      alert(error.response?.data?.message || "Payment Failed");
+      alert(
+        error.response?.data?.message ||
+          "Payment Failed"
+      );
       setLoading(false);
     }
   };
@@ -191,6 +230,7 @@ const Checkout = () => {
         {cart.length === 0 ? (
           <div>
             <h3>No selected items found</h3>
+
             <button onClick={() => navigate("/cart")}>
               Back to Cart
             </button>
@@ -249,32 +289,40 @@ const Checkout = () => {
               <h2>Order Summary</h2>
 
               {cart.map((item) => (
-                <div key={item._id} className="checkout-item">
+                <div
+                  key={item._id}
+                  className="checkout-item"
+                >
                   <span>{item.product.name}</span>
                   <span>
-                    {item.quantity} × ₹{item.product.price}
+                    {item.quantity} × ₹
+                    {item.product.price}
                   </span>
                 </div>
               ))}
 
               <hr />
 
-              <p>
-                Items Total: ₹{itemsTotal}
-              </p>
+              <p>Items Total: ₹{itemsTotal}</p>
 
               <p>
-                Delivery: ₹{deliveryCharge}
+                Delivery:{" "}
+                {deliveryCharge === 0
+                  ? "FREE"
+                  : `₹${deliveryCharge}`}
               </p>
 
-              <p>
-                Marketplace Fee: ₹{marketplaceFee}
-              </p>
+              <p>Marketplace Fee: ₹{marketplaceFee}</p>
 
               <h2>Total: ₹{total}</h2>
 
-              <button onClick={handlePayment} disabled={loading}>
-                {loading ? "Processing..." : `Pay ₹${total}`}
+              <button
+                onClick={handlePayment}
+                disabled={loading}
+              >
+                {loading
+                  ? "Processing..."
+                  : `Pay ₹${total}`}
               </button>
             </div>
           </>

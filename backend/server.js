@@ -130,6 +130,7 @@ const couponRoutes = require("./routes/couponRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
+const deliveryRoutes = require("./routes/deliveryRoutes");
 
 /*
 =========================
@@ -150,6 +151,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/delivery", deliveryRoutes);
 
 /*
 =========================

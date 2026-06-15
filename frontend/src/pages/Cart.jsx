@@ -5,11 +5,29 @@ import { Link, useNavigate } from "react-router-dom";
 const Cart = () => {
   const [cart, setCart] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchCart();
   }, []);
+
+  const selectedCartItems = useMemo(() => {
+    return cart.filter((item) =>
+      selectedItems.includes(item.product._id)
+    );
+  }, [cart, selectedItems]);
+
+  const itemsTotal = selectedCartItems.reduce(
+    (sum, item) =>
+      sum + item.product.price * item.quantity,
+    0
+  );
+
+  useEffect(() => {
+    calculateDeliveryCharge();
+  }, [itemsTotal]);
 
   const fetchCart = async () => {
     try {
@@ -17,9 +35,31 @@ const Cart = () => {
       const items = res.data.cart.items || [];
 
       setCart(items);
-      setSelectedItems(items.map((item) => item.product._id));
+      setSelectedItems(
+        items.map((item) => item.product._id)
+      );
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const calculateDeliveryCharge = async () => {
+    try {
+      if (itemsTotal <= 0) {
+        setDeliveryCharge(0);
+        return;
+      }
+
+      const res = await API.get(
+        `/delivery/calculate?subtotal=${itemsTotal}`
+      );
+
+      setDeliveryCharge(
+        res.data.deliveryCharge || 0
+      );
+    } catch (error) {
+      console.log(error);
+      setDeliveryCharge(0);
     }
   };
 
@@ -35,7 +75,9 @@ const Cart = () => {
     if (selectedItems.length === cart.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(cart.map((item) => item.product._id));
+      setSelectedItems(
+        cart.map((item) => item.product._id)
+      );
     }
   };
 
@@ -57,25 +99,15 @@ const Cart = () => {
 
       fetchCart();
     } catch (error) {
-      alert(error.response?.data?.message || "Quantity update failed");
+      alert(
+        error.response?.data?.message ||
+          "Quantity update failed"
+      );
     }
   };
 
-  const selectedCartItems = useMemo(() => {
-    return cart.filter((item) =>
-      selectedItems.includes(item.product._id)
-    );
-  }, [cart, selectedItems]);
-
-  const itemsTotal = selectedCartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  );
-
-  const deliveryCharge =
-    itemsTotal > 0 && itemsTotal < 1000 ? 80 : 0;
-
-  const marketplaceFee = itemsTotal > 0 ? 5 : 0;
+  const marketplaceFee =
+    itemsTotal > 0 ? 5 : 0;
 
   const orderTotal =
     itemsTotal + deliveryCharge + marketplaceFee;
@@ -104,7 +136,9 @@ const Cart = () => {
             <label className="select-all-row">
               <input
                 type="checkbox"
-                checked={selectedItems.length === cart.length}
+                checked={
+                  selectedItems.length === cart.length
+                }
                 onChange={toggleAll}
               />
               Select all items
@@ -128,50 +162,72 @@ const Cart = () => {
       {cart.length === 0 ? (
         <div className="empty-cart-box">
           <h2>Your cart is empty</h2>
-          <Link to="/products">Continue Shopping</Link>
+          <Link to="/products">
+            Continue Shopping
+          </Link>
         </div>
       ) : (
         <div className="cart-layout">
           <div className="cart-list">
             {cart.map((item) => {
-              const isSelected = selectedItems.includes(item.product._id);
+              const isSelected =
+                selectedItems.includes(
+                  item.product._id
+                );
 
               return (
                 <div
                   className={`cart-item pro-cart-item ${
-                    isSelected ? "selected-cart-item" : ""
+                    isSelected
+                      ? "selected-cart-item"
+                      : ""
                   }`}
                   key={item._id}
                 >
                   <button
-                    className={`cart-check ${isSelected ? "checked" : ""}`}
-                    onClick={() => toggleItem(item.product._id)}
+                    className={`cart-check ${
+                      isSelected ? "checked" : ""
+                    }`}
+                    onClick={() =>
+                      toggleItem(item.product._id)
+                    }
                   >
                     {isSelected ? "✓" : ""}
                   </button>
 
                   <img
-                    src={item.product.images?.[0]?.url || "/favicon.svg"}
+                    src={
+                      item.product.images?.[0]?.url ||
+                      "/favicon.svg"
+                    }
                     alt={item.product.name}
                   />
 
                   <div className="cart-info">
                     <h3>{item.product.name}</h3>
 
-                    <p className="cart-category">{item.product.category}</p>
+                    <p className="cart-category">
+                      {item.product.category}
+                    </p>
 
                     <h2>₹{item.product.price}</h2>
 
-                    <p className="cart-stock">In stock</p>
+                    <p className="cart-stock">
+                      In stock
+                    </p>
 
-                    <p className="cart-return">10 days returnable</p>
+                    <p className="cart-return">
+                      10 days returnable
+                    </p>
 
                     <div className="cart-actions">
                       <div className="qty-box">
                         <button
                           onClick={() => {
                             if (item.quantity <= 1) {
-                              removeItem(item.product._id);
+                              removeItem(
+                                item.product._id
+                              );
                             } else {
                               updateQty(
                                 item.product._id,
@@ -199,7 +255,9 @@ const Cart = () => {
 
                       <button
                         className="cart-delete-btn"
-                        onClick={() => removeItem(item.product._id)}
+                        onClick={() =>
+                          removeItem(item.product._id)
+                        }
                       >
                         Delete
                       </button>
@@ -224,7 +282,11 @@ const Cart = () => {
 
             <p>
               Delivery:
-              <span>₹{deliveryCharge}</span>
+              <span>
+                {deliveryCharge === 0
+                  ? "FREE"
+                  : `₹${deliveryCharge}`}
+              </span>
             </p>
 
             <p>
@@ -232,12 +294,13 @@ const Cart = () => {
               <span>₹{marketplaceFee}</span>
             </p>
 
-            {deliveryCharge === 0 && itemsTotal > 0 && (
-              <p className="saving-line">
-                FREE Delivery
-                <span>-₹80</span>
-              </p>
-            )}
+            {deliveryCharge === 0 &&
+              itemsTotal > 0 && (
+                <p className="saving-line">
+                  FREE Delivery
+                  <span>FREE</span>
+                </p>
+              )}
 
             <h2>
               Order Total:

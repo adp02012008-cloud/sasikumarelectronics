@@ -17,6 +17,7 @@ import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import AdminUsers from "./pages/AdminUsers";
 import Analytics from "./pages/Analytics";
+import AdminDelivery from "./pages/AdminDelivery";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Navbar from "./components/Navbar";
@@ -107,6 +108,15 @@ function App() {
           element={
             <ProtectedRoute admin={true}>
               <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/delivery"
+          element={
+            <ProtectedRoute admin={true}>
+              <AdminDelivery />
             </ProtectedRoute>
           }
         />

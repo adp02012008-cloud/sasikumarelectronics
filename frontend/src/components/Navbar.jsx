@@ -155,6 +155,10 @@ const Navbar = () => {
               Users
             </Link>
 
+            <Link className="admin-link" to="/admin/delivery">
+                Delivery
+            </Link>
+
             <Link className="admin-link" to="/admin/analytics">
               Analytics
             </Link>
