@@ -1,25 +1,18 @@
-const express =
-require("express");
+const express = require("express");
 
-const router =
-express.Router();
+const router = express.Router();
 
 const {
   createOrder,
-  verifyPayment
-} = require(
-  "../controllers/paymentController"
-);
+  verifyPayment,
+} = require("../controllers/paymentController");
 
-router.post(
-  "/create-order",
-  createOrder
-);
+const {
+  protect,
+} = require("../middleware/authMiddleware");
 
-router.post(
-  "/verify",
-  verifyPayment
-);
+router.post("/create-order", protect, createOrder);
 
-module.exports =
-router;
+router.post("/verify", protect, verifyPayment);
+
+module.exports = router;

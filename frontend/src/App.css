@@ -2517,3 +2517,55 @@ body{
   }
 
 }
+
+.orders-top-card{
+  background:white;
+  padding:25px;
+  border-radius:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+  box-shadow:0 8px 25px rgba(15,23,42,.08);
+}
+
+.orders-top-card p{
+  color:#64748b;
+}
+
+.orders-top-card button{
+  background:#2563eb;
+  color:white;
+  padding:12px 25px;
+  border-radius:8px;
+  font-weight:900;
+}
+
+.order-toolbar-card{
+  background:white;
+  padding:18px;
+  border-radius:14px;
+  display:flex;
+  gap:15px;
+  margin-bottom:20px;
+  box-shadow:0 8px 25px rgba(15,23,42,.08);
+}
+
+.order-toolbar-card input{
+  flex:1;
+}
+
+.order-toolbar-card input,
+.order-toolbar-card select{
+  padding:13px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+}
+
+@media(max-width:768px){
+  .orders-top-card,
+  .order-toolbar-card{
+    flex-direction:column;
+    align-items:stretch;
+  }
+}
