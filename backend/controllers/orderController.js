@@ -5,6 +5,15 @@ const generateInvoice = require("../utils/invoiceGenerator");
 const fs = require("fs");
 const path = require("path");
 
+const statusFlow = {
+  Processing: ["Packed", "Cancelled"],
+  Packed: ["Shipped", "Cancelled"],
+  Shipped: ["Out For Delivery"],
+  "Out For Delivery": ["Delivered"],
+  Delivered: [],
+  Cancelled: [],
+};
+
 const formatItems = (order) => {
   return order.orderItems
     .map(
@@ -12,18 +21,6 @@ const formatItems = (order) => {
         `<li>${item.product?.name || "Product"} × ${item.quantity} - ₹${item.price}</li>`
     )
     .join("");
-};
-
-const addressHtml = (address = {}) => {
-  return `
-    <p><b>Name:</b> ${address.fullName || "Customer"}</p>
-    <p><b>Phone:</b> ${address.phone || "Not Available"}</p>
-    <p><b>Address:</b> ${address.address || "Not Available"}</p>
-    <p><b>City:</b> ${address.city || "Not Available"}</p>
-    <p><b>State:</b> ${address.state || "Not Available"}</p>
-    <p><b>Pincode:</b> ${address.pincode || "Not Available"}</p>
-    <p><b>Country:</b> ${address.country || "India"}</p>
-  `;
 };
 
 const safeSendEmail = async (options) => {
@@ -35,12 +32,6 @@ const safeSendEmail = async (options) => {
     return false;
   }
 };
-
-/*
-=========================
-CREATE ORDER
-=========================
-*/
 
 exports.createOrder = async (req, res) => {
   try {
@@ -124,50 +115,36 @@ exports.createOrder = async (req, res) => {
     const invoicePath = generateInvoice(order);
 
     await safeSendEmail({
-      to: req.user.email,
+      to: order.user.email,
       subject: "Your Sasikumar Electronics Order Confirmed",
       html: `
         <h2>Order Confirmed</h2>
         <p>Hello ${order.shippingAddress.fullName},</p>
         <p>Your order has been placed successfully.</p>
 
-        <h3>Order Details</h3>
         <p><b>Order ID:</b> ${order._id}</p>
-        <p><b>Total Amount:</b> ₹${order.totalPrice}</p>
+        <p><b>Total:</b> ₹${order.totalPrice}</p>
         <p><b>Payment ID:</b> ${order.paymentInfo?.razorpayPaymentId || "N/A"}</p>
 
         <h3>Products</h3>
         <ul>${formatItems(order)}</ul>
-
-        <h3>Delivery Address</h3>
-        ${addressHtml(order.shippingAddress)}
 
         <p>Thank you for shopping with Sasikumar Electronics.</p>
       `,
     });
 
     await safeSendEmail({
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+      to: process.env.ADMIN_EMAIL || process.env.EMAIL_FROM,
       subject: "New Order Received - Sasikumar Electronics",
       html: `
         <h2>New Order Received</h2>
-
-        <h3>Customer Details</h3>
-        <p><b>Name:</b> ${order.shippingAddress.fullName}</p>
-        <p><b>Email:</b> ${req.user.email}</p>
+        <p><b>Customer:</b> ${order.shippingAddress.fullName}</p>
+        <p><b>Email:</b> ${order.user.email}</p>
         <p><b>Phone:</b> ${order.shippingAddress.phone}</p>
-
-        <h3>Order Details</h3>
-        <p><b>Order ID:</b> ${order._id}</p>
-        <p><b>Total Amount:</b> ₹${order.totalPrice}</p>
-        <p><b>Payment Method:</b> ${order.paymentMethod}</p>
-        <p><b>Payment ID:</b> ${order.paymentInfo?.razorpayPaymentId || "N/A"}</p>
+        <p><b>Total:</b> ₹${order.totalPrice}</p>
 
         <h3>Products</h3>
         <ul>${formatItems(order)}</ul>
-
-        <h3>Delivery Address</h3>
-        ${addressHtml(order.shippingAddress)}
       `,
     });
 
@@ -186,12 +163,6 @@ exports.createOrder = async (req, res) => {
     });
   }
 };
-
-/*
-=========================
-GET ALL ORDERS - ADMIN
-=========================
-*/
 
 exports.getOrders = async (req, res) => {
   try {
@@ -213,12 +184,6 @@ exports.getOrders = async (req, res) => {
   }
 };
 
-/*
-=========================
-GET MY ORDERS - USER
-=========================
-*/
-
 exports.getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({
@@ -239,12 +204,6 @@ exports.getMyOrders = async (req, res) => {
     });
   }
 };
-
-/*
-=========================
-GET SINGLE ORDER
-=========================
-*/
 
 exports.getSingleOrder = async (req, res) => {
   try {
@@ -281,15 +240,11 @@ exports.getSingleOrder = async (req, res) => {
   }
 };
 
-/*
-=========================
-DOWNLOAD INVOICE
-=========================
-*/
-
 exports.downloadInvoice = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id)
+      .populate("user")
+      .populate("orderItems.product");
 
     if (!order) {
       return res.status(404).json({
@@ -299,7 +254,7 @@ exports.downloadInvoice = async (req, res) => {
     }
 
     if (
-      order.user.toString() !== req.user.id &&
+      order.user._id.toString() !== req.user.id &&
       req.user.role !== "admin"
     ) {
       return res.status(403).json({
@@ -315,10 +270,7 @@ exports.downloadInvoice = async (req, res) => {
     );
 
     if (!fs.existsSync(invoicePath)) {
-      return res.status(404).json({
-        success: false,
-        message: "Invoice Not Found",
-      });
+      generateInvoice(order);
     }
 
     res.download(invoicePath);
@@ -330,14 +282,10 @@ exports.downloadInvoice = async (req, res) => {
   }
 };
 
-/*
-=========================
-UPDATE ORDER STATUS - ADMIN
-=========================
-*/
-
 exports.updateOrderStatus = async (req, res) => {
   try {
+    const newStatus = req.body.status;
+
     const existingOrder = await Order.findById(req.params.id)
       .populate("user")
       .populate("orderItems.product");
@@ -349,22 +297,27 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    if (existingOrder.orderStatus === req.body.status) {
-      return res.status(200).json({
-        success: true,
-        message: "Order already has this status",
-        order: existingOrder,
+    if (existingOrder.orderStatus === newStatus) {
+      return res.status(400).json({
+        success: false,
+        message: `Order is already ${newStatus}`,
       });
     }
 
-    if (
-      req.body.status === "Cancelled" &&
-      existingOrder.orderStatus !== "Cancelled"
-    ) {
-      for (const item of existingOrder.orderItems) {
-        const productId = item.product?._id || item.product;
+    const allowedNext = statusFlow[existingOrder.orderStatus] || [];
 
-        const product = await Product.findById(productId);
+    if (!allowedNext.includes(newStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot change from ${existingOrder.orderStatus} to ${newStatus}`,
+      });
+    }
+
+    if (newStatus === "Cancelled") {
+      for (const item of existingOrder.orderItems) {
+        const product = await Product.findById(
+          item.product?._id || item.product
+        );
 
         if (product) {
           product.stock = product.stock + item.quantity;
@@ -374,10 +327,10 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     const updateData = {
-      orderStatus: req.body.status,
+      orderStatus: newStatus,
     };
 
-    if (req.body.status === "Delivered") {
+    if (newStatus === "Delivered") {
       updateData.deliveredAt = Date.now();
     }
 
@@ -387,63 +340,49 @@ exports.updateOrderStatus = async (req, res) => {
         $set: updateData,
         $push: {
           trackingTimeline: {
-            status: req.body.status,
+            status: newStatus,
             message:
               req.body.message ||
-              `Order status updated to ${req.body.status}`,
+              `Order status updated to ${newStatus}`,
             date: new Date(),
           },
         },
       },
       {
-        new: true,
+        returnDocument: "after",
         runValidators: false,
       }
     )
       .populate("user")
       .populate("orderItems.product");
 
-    const customerName =
-      order.shippingAddress?.fullName ||
-      order.user?.name ||
-      "Customer";
+    generateInvoice(order);
 
     await safeSendEmail({
       to: order.user.email,
       subject: `Order Status Updated - ${order.orderStatus}`,
       html: `
         <h2>Order Status Updated</h2>
-
-        <p>Hello ${customerName},</p>
-
-        <p>Your Sasikumar Electronics order status has been updated.</p>
-
+        <p>Hello ${order.shippingAddress?.fullName || order.user?.name},</p>
+        <p>Your order is now <b>${order.orderStatus}</b>.</p>
         <p><b>Order ID:</b> ${order._id}</p>
-        <p><b>New Status:</b> ${order.orderStatus}</p>
-        <p><b>Message:</b> ${
-          req.body.message || `Order status updated to ${req.body.status}`
-        }</p>
 
         <h3>Products</h3>
         <ul>${formatItems(order)}</ul>
-
-        <p>Thank you for shopping with Sasikumar Electronics.</p>
       `,
     });
 
-    if (req.body.status === "Delivered") {
-      await safeSendEmail({
-        to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
-        subject: "Order Delivered - Sasikumar Electronics",
-        html: `
-          <h2>Order Delivered</h2>
-          <p><b>Order ID:</b> ${order._id}</p>
-          <p><b>Customer:</b> ${customerName}</p>
-          <p><b>Phone:</b> ${order.shippingAddress?.phone || "Not Available"}</p>
-          <p><b>Total:</b> ₹${order.totalPrice}</p>
-        `,
-      });
-    }
+    await safeSendEmail({
+      to: process.env.ADMIN_EMAIL || process.env.EMAIL_FROM,
+      subject: `Order Updated - ${order.orderStatus}`,
+      html: `
+        <h2>Order Status Updated</h2>
+        <p><b>Order ID:</b> ${order._id}</p>
+        <p><b>Status:</b> ${order.orderStatus}</p>
+        <p><b>Customer:</b> ${order.shippingAddress?.fullName}</p>
+        <p><b>Total:</b> ₹${order.totalPrice}</p>
+      `,
+    });
 
     res.status(200).json({
       success: true,
