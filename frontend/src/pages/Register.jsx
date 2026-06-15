@@ -1,135 +1,364 @@
 import {
- useState,
+  useEffect,
+  useState,
 } from "react";
-
-import {
- Link,
- useNavigate,
-} from "react-router-dom";
 
 import API from "../api/axios";
 
-const Register = () => {
- const navigate = useNavigate();
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
- const [form, setForm] = useState({
-  name: "",
-  email: "",
-  password: "",
- });
+const Products = () => {
+  const [products, setProducts] = useState([]);
+  const [keyword, setKeyword] = useState("");
+  const [loading, setLoading] = useState(true);
 
- const [loading, setLoading] = useState(false);
+  const [reviewProduct, setReviewProduct] = useState(null);
 
- const handleGoogleSignup = () => {
-  window.location.href =
-   `${import.meta.env.VITE_API_URL}/auth/google`;
- };
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    comment: "",
+  });
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  try {
-   setLoading(true);
+  useEffect(() => {
+    const searchValue =
+      searchParams.get("search") || "";
 
-   await API.post(
-    "/auth/register",
-    form
-   );
+    setKeyword(searchValue);
+    fetchProducts(searchValue);
+  }, [searchParams]);
 
-   alert("Account Created Successfully");
+  const fetchProducts = async (search = "") => {
+    try {
+      setLoading(true);
 
-   navigate("/login");
-  } catch (error) {
-   alert(
-    error.response?.data?.message ||
-    "Registration Failed"
-   );
-  } finally {
-   setLoading(false);
-  }
- };
+      const res = await API.get(
+        search
+          ? `/products?keyword=${search}`
+          : "/products"
+      );
 
- return (
-  <div className="auth-page">
-   <div className="auth-card">
-    <h1>Create Account</h1>
+      setProducts(res.data.products || []);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    <p className="auth-subtitle">
-     Join Sasikumar Electronics
-    </p>
+  const addToCart = async (productId) => {
+    try {
+      const user = JSON.parse(
+        localStorage.getItem("user")
+      );
 
-    <button
-     type="button"
-     className="google-btn"
-     onClick={handleGoogleSignup}
-    >
-     Continue with Google
-    </button>
+      if (!user) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
 
-    <div className="or-line">
-     <span>or</span>
+      await API.post("/cart/add", {
+        productId,
+        quantity: 1,
+      });
+
+      alert("Product added to cart");
+      navigate("/cart");
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Failed to add product to cart"
+      );
+    }
+  };
+
+  const addToWishlist = async (productId) => {
+    try {
+      const user = JSON.parse(
+        localStorage.getItem("user")
+      );
+
+      if (!user) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
+
+      await API.post("/wishlist/add", {
+        productId,
+      });
+
+      alert("Product added to wishlist");
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Failed to add product to wishlist"
+      );
+    }
+  };
+
+  const searchProducts = () => {
+    navigate(
+      keyword.trim()
+        ? `/products?search=${keyword}`
+        : "/products"
+    );
+  };
+
+  const submitReview = async () => {
+    try {
+      if (!reviewProduct) {
+        return;
+      }
+
+      await API.post("/reviews", {
+        product: reviewProduct._id,
+        rating: Number(reviewForm.rating),
+        comment: reviewForm.comment,
+      });
+
+      alert("Review submitted successfully");
+
+      setReviewProduct(null);
+
+      setReviewForm({
+        rating: 5,
+        comment: "",
+      });
+
+      fetchProducts(keyword);
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Please login to add review"
+      );
+    }
+  };
+
+  return (
+    <div className="products-page">
+      <div className="products-header industrial-products-header">
+        <div>
+          <h1>
+            Industrial & Automobile Electronics
+          </h1>
+
+          <p>
+            Bike accessories, car electricals, LED lights,
+            wiring, switches and workshop essentials
+          </p>
+        </div>
+
+        <div className="product-search-line">
+          <input
+            type="text"
+            placeholder="Search bike light, car horn, wire, switch..."
+            value={keyword}
+            onChange={(e) =>
+              setKeyword(e.target.value)
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                searchProducts();
+              }
+            }}
+          />
+
+          <button onClick={searchProducts}>
+            Search
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="product-grid">
+          {[1, 2, 3, 4].map((item) => (
+            <div
+              className="skeleton-card"
+              key={item}
+            ></div>
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <h2>No products found</h2>
+      ) : (
+        <div className="product-grid">
+          {products.map((product) => (
+            <div
+              className="product-card pro-product-card"
+              key={product._id}
+              onClick={() =>
+                navigate(`/products/${product._id}`)
+              }
+            >
+              <div className="product-badge">
+                {product.stock > 0
+                  ? "In Stock"
+                  : "Out of Stock"}
+              </div>
+
+              <div className="product-img-box">
+                <img
+                  src={
+                    product.images?.[0]?.url ||
+                    "/favicon.svg"
+                  }
+                  alt={product.name}
+                />
+              </div>
+
+              <div className="product-info">
+                <p className="product-category">
+                  {product.category}
+                </p>
+
+                <h3>{product.name}</h3>
+
+                <p className="product-desc">
+                  {product.description}
+                </p>
+
+                <div className="rating-row">
+                  ⭐ {product.ratings || 0}
+                  <span>
+                    ({product.numReviews || 0} reviews)
+                  </span>
+                </div>
+
+                <p className="price">
+                  ₹{product.price}
+                </p>
+
+                <p
+                  className={
+                    product.stock > 0
+                      ? "stock"
+                      : "out-stock"
+                  }
+                >
+                  {product.stock > 0
+                    ? `Available (${product.stock})`
+                    : "Currently unavailable"}
+                </p>
+
+                <div
+                  className="product-actions"
+                  onClick={(e) =>
+                    e.stopPropagation()
+                  }
+                >
+                  <button
+                    className="cart-btn"
+                    disabled={product.stock <= 0}
+                    onClick={() =>
+                      addToCart(product._id)
+                    }
+                  >
+                    Add To Cart
+                  </button>
+
+                  <button
+                    className="wish-btn"
+                    onClick={() =>
+                      addToWishlist(product._id)
+                    }
+                  >
+                    ❤️
+                  </button>
+                </div>
+
+                <button
+                  className="review-open-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setReviewProduct(product);
+                  }}
+                >
+                  Rate / Comment
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {reviewProduct && (
+        <div className="review-modal-bg">
+          <div className="review-modal">
+            <h2>Review Product</h2>
+
+            <p>{reviewProduct.name}</p>
+
+            <label>Rating</label>
+
+            <select
+              value={reviewForm.rating}
+              onChange={(e) =>
+                setReviewForm({
+                  ...reviewForm,
+                  rating: e.target.value,
+                })
+              }
+            >
+              <option value="5">
+                5 - Excellent
+              </option>
+
+              <option value="4">
+                4 - Good
+              </option>
+
+              <option value="3">
+                3 - Average
+              </option>
+
+              <option value="2">
+                2 - Poor
+              </option>
+
+              <option value="1">
+                1 - Bad
+              </option>
+            </select>
+
+            <label>Comment</label>
+
+            <textarea
+              placeholder="Write your experience..."
+              value={reviewForm.comment}
+              onChange={(e) =>
+                setReviewForm({
+                  ...reviewForm,
+                  comment: e.target.value,
+                })
+              }
+            />
+
+            <div className="review-modal-actions">
+              <button onClick={submitReview}>
+                Submit Review
+              </button>
+
+              <button
+                className="cancel-review"
+                onClick={() =>
+                  setReviewProduct(null)
+                }
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-
-    <form onSubmit={handleSubmit}>
-     <input
-      type="text"
-      placeholder="Full Name"
-      required
-      value={form.name}
-      onChange={(e) =>
-       setForm({
-        ...form,
-        name: e.target.value,
-       })
-      }
-     />
-
-     <input
-      type="email"
-      placeholder="Email Address"
-      required
-      value={form.email}
-      onChange={(e) =>
-       setForm({
-        ...form,
-        email: e.target.value,
-       })
-      }
-     />
-
-     <input
-      type="password"
-      placeholder="Password"
-      required
-      value={form.password}
-      onChange={(e) =>
-       setForm({
-        ...form,
-        password: e.target.value,
-       })
-      }
-     />
-
-     <button disabled={loading}>
-      {
-       loading
-       ?
-       "Creating..."
-       :
-       "Create Account"
-      }
-     </button>
-    </form>
-
-    <p className="switch-text">
-     Already have an account?
-     <Link to="/login">
-      Login
-     </Link>
-    </p>
-   </div>
-  </div>
- );
+  );
 };
 
-export default Register;
+export default Products;
