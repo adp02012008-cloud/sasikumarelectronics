@@ -42,16 +42,16 @@ const AdminOrders = () => {
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
+      const keyword = search.toLowerCase();
+
       const matchStatus =
         filter === "All" || order.orderStatus === filter;
 
-      const value = search.toLowerCase();
-
       const matchSearch =
-        order._id.toLowerCase().includes(value) ||
-        order.shippingAddress?.fullName?.toLowerCase().includes(value) ||
-        order.user?.email?.toLowerCase().includes(value) ||
-        order.shippingAddress?.phone?.includes(value);
+        order._id.toLowerCase().includes(keyword) ||
+        order.shippingAddress?.fullName?.toLowerCase().includes(keyword) ||
+        order.user?.email?.toLowerCase().includes(keyword) ||
+        order.shippingAddress?.phone?.includes(keyword);
 
       return matchStatus && matchSearch;
     });
@@ -92,7 +92,7 @@ const AdminOrders = () => {
 
   return (
     <div className="admin-orders professional-orders">
-      <div className="orders-top">
+      <div className="orders-top-card">
         <div>
           <h1>Order Management</h1>
           <p>
@@ -100,10 +100,10 @@ const AdminOrders = () => {
           </p>
         </div>
 
-        <button onClick={fetchOrders}>Refresh</button>
+        <button onClick={fetchOrders}>Refresh Orders</button>
       </div>
 
-      <div className="order-toolbar">
+      <div className="order-toolbar-card">
         <input
           placeholder="Search order id, customer, email or phone..."
           value={search}
@@ -139,31 +139,39 @@ const AdminOrders = () => {
           <tbody>
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan="7">No orders found</td>
+                <td colSpan="7" className="empty-table">
+                  No orders found
+                </td>
               </tr>
             ) : (
               filteredOrders.map((order) => (
                 <tr key={order._id}>
                   <td>
-                    <b>{shortOrderId(order._id)}</b>
-                    <small>
-                      {new Date(order.createdAt).toLocaleString()}
-                    </small>
+                    <div className="order-id-box">
+                      <b>{shortOrderId(order._id)}</b>
+                      <small>
+                        {new Date(order.createdAt).toLocaleString()}
+                      </small>
+                    </div>
                   </td>
 
                   <td>
-                    <b>
-                      {order.shippingAddress?.fullName ||
-                        order.user?.name ||
-                        "Customer"}
-                    </b>
-                    <small>{order.user?.email}</small>
-                    <small>{order.shippingAddress?.phone}</small>
+                    <div className="customer-cell">
+                      <b>
+                        {order.shippingAddress?.fullName ||
+                          order.user?.name ||
+                          "Customer"}
+                      </b>
+                      <small>{order.user?.email || "No email"}</small>
+                      <small>{order.shippingAddress?.phone || "No phone"}</small>
+                    </div>
                   </td>
 
                   <td>{order.orderItems?.length || 0}</td>
 
-                  <td>₹{order.totalPrice}</td>
+                  <td>
+                    <b>₹{order.totalPrice}</b>
+                  </td>
 
                   <td>
                     <span className="paid-badge">Paid</span>
@@ -230,8 +238,7 @@ const AdminOrders = () => {
                 <p>Status: Paid</p>
                 <p>Method: {selectedOrder.paymentMethod}</p>
                 <p>
-                  ID:{" "}
-                  {selectedOrder.paymentInfo?.razorpayPaymentId || "N/A"}
+                  ID: {selectedOrder.paymentInfo?.razorpayPaymentId || "N/A"}
                 </p>
                 <p>Total: ₹{selectedOrder.totalPrice}</p>
               </div>
@@ -255,20 +262,13 @@ const AdminOrders = () => {
                   <tr key={item._id}>
                     <td>
                       <img
-                        src={
-                          item.product?.images?.[0]?.url ||
-                          "/favicon.svg"
-                        }
+                        src={item.product?.images?.[0]?.url || "/favicon.svg"}
                         alt=""
                       />
                     </td>
-
                     <td>{item.product?.name || "Product removed"}</td>
-
                     <td>{item.quantity}</td>
-
                     <td>₹{item.price}</td>
-
                     <td>₹{item.price * item.quantity}</td>
                   </tr>
                 ))}
