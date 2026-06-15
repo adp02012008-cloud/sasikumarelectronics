@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import API from "../api/axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Cart = () => {
   const [cart, setCart] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCart();
@@ -12,9 +14,28 @@ const Cart = () => {
   const fetchCart = async () => {
     try {
       const res = await API.get("/cart");
-      setCart(res.data.cart.items || []);
+      const items = res.data.cart.items || [];
+
+      setCart(items);
+      setSelectedItems(items.map((item) => item.product._id));
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const toggleItem = (productId) => {
+    setSelectedItems((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const toggleAll = () => {
+    if (selectedItems.length === cart.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(cart.map((item) => item.product._id));
     }
   };
 
@@ -27,33 +48,51 @@ const Cart = () => {
     }
   };
 
-  const increaseQty = async (productId) => {
+  const updateQty = async (productId, quantity) => {
     try {
-      await API.post("/cart/add", {
+      await API.put("/cart/update", {
         productId,
-        quantity: 1,
+        quantity,
       });
 
       fetchCart();
     } catch (error) {
-      console.log(error);
+      alert(error.response?.data?.message || "Quantity update failed");
     }
   };
 
-  const itemsTotal = cart.reduce(
-    (sum, item) =>
-      sum + item.product.price * item.quantity,
+  const selectedCartItems = useMemo(() => {
+    return cart.filter((item) =>
+      selectedItems.includes(item.product._id)
+    );
+  }, [cart, selectedItems]);
+
+  const itemsTotal = selectedCartItems.reduce(
+    (sum, item) => sum + item.product.price * item.quantity,
     0
   );
 
   const deliveryCharge =
     itemsTotal > 0 && itemsTotal < 1000 ? 80 : 0;
 
-  const marketplaceFee =
-    itemsTotal > 0 ? 5 : 0;
+  const marketplaceFee = itemsTotal > 0 ? 5 : 0;
 
   const orderTotal =
     itemsTotal + deliveryCharge + marketplaceFee;
+
+  const proceedCheckout = () => {
+    if (selectedItems.length === 0) {
+      alert("Please select at least one item");
+      return;
+    }
+
+    localStorage.setItem(
+      "checkoutItems",
+      JSON.stringify(selectedItems)
+    );
+
+    navigate("/checkout");
+  };
 
   return (
     <div className="cart-page pro-cart-page">
@@ -62,16 +101,26 @@ const Cart = () => {
 
         {cart.length > 0 && (
           <>
-            <h2>
-              Total ₹{orderTotal}
-            </h2>
+            <label className="select-all-row">
+              <input
+                type="checkbox"
+                checked={selectedItems.length === cart.length}
+                onChange={toggleAll}
+              />
+              Select all items
+            </label>
 
-            <Link
-              to="/checkout"
+            <h2>Total ₹{orderTotal}</h2>
+
+            <button
               className="mobile-buy-btn"
+              onClick={proceedCheckout}
+              disabled={selectedItems.length === 0}
             >
-              Proceed to Buy ({cart.length} items)
-            </Link>
+              {selectedItems.length === 0
+                ? "Select items to checkout"
+                : `Proceed to Buy (${selectedItems.length} items)`}
+            </button>
           </>
         )}
       </div>
@@ -79,87 +128,97 @@ const Cart = () => {
       {cart.length === 0 ? (
         <div className="empty-cart-box">
           <h2>Your cart is empty</h2>
-          <Link to="/products">
-            Continue Shopping
-          </Link>
+          <Link to="/products">Continue Shopping</Link>
         </div>
       ) : (
-        <>
+        <div className="cart-layout">
           <div className="cart-list">
-            {cart.map((item) => (
-              <div
-                className="cart-item pro-cart-item"
-                key={item._id}
-              >
-                <div className="cart-check">✓</div>
+            {cart.map((item) => {
+              const isSelected = selectedItems.includes(item.product._id);
 
-                <img
-                  src={
-                    item.product.images?.[0]?.url ||
-                    "/favicon.svg"
-                  }
-                  alt={item.product.name}
-                />
+              return (
+                <div
+                  className={`cart-item pro-cart-item ${
+                    isSelected ? "selected-cart-item" : ""
+                  }`}
+                  key={item._id}
+                >
+                  <button
+                    className={`cart-check ${isSelected ? "checked" : ""}`}
+                    onClick={() => toggleItem(item.product._id)}
+                  >
+                    {isSelected ? "✓" : ""}
+                  </button>
 
-                <div className="cart-info">
-                  <h3>{item.product.name}</h3>
+                  <img
+                    src={item.product.images?.[0]?.url || "/favicon.svg"}
+                    alt={item.product.name}
+                  />
 
-                  <p className="cart-category">
-                    {item.product.category}
-                  </p>
+                  <div className="cart-info">
+                    <h3>{item.product.name}</h3>
 
-                  <h2>₹{item.product.price}</h2>
+                    <p className="cart-category">{item.product.category}</p>
 
-                  <p className="cart-stock">
-                    In stock
-                  </p>
+                    <h2>₹{item.product.price}</h2>
 
-                  <p className="cart-return">
-                    10 days returnable
-                  </p>
+                    <p className="cart-stock">In stock</p>
 
-                  <div className="cart-actions">
-                    <div className="qty-box">
+                    <p className="cart-return">10 days returnable</p>
+
+                    <div className="cart-actions">
+                      <div className="qty-box">
+                        <button
+                          onClick={() => {
+                            if (item.quantity <= 1) {
+                              removeItem(item.product._id);
+                            } else {
+                              updateQty(
+                                item.product._id,
+                                item.quantity - 1
+                              );
+                            }
+                          }}
+                        >
+                          -
+                        </button>
+
+                        <span>{item.quantity}</span>
+
+                        <button
+                          onClick={() =>
+                            updateQty(
+                              item.product._id,
+                              item.quantity + 1
+                            )
+                          }
+                        >
+                          +
+                        </button>
+                      </div>
+
                       <button
-                        onClick={() =>
-                          removeItem(item.product._id)
-                        }
+                        className="cart-delete-btn"
+                        onClick={() => removeItem(item.product._id)}
                       >
-                        🗑
+                        Delete
                       </button>
 
-                      <span>{item.quantity}</span>
-
-                      <button
-                        onClick={() =>
-                          increaseQty(item.product._id)
-                        }
-                      >
-                        +
+                      <button className="cart-save-btn">
+                        Save
                       </button>
                     </div>
-
-                    <button
-                      className="cart-delete-btn"
-                      onClick={() =>
-                        removeItem(item.product._id)
-                      }
-                    >
-                      Delete
-                    </button>
-
-                    <button className="cart-save-btn">
-                      Save
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="cart-summary pro-cart-summary">
+            <h2>Price Details</h2>
+
             <p>
-              Items:
+              Items ({selectedItems.length}):
               <span>₹{itemsTotal}</span>
             </p>
 
@@ -173,7 +232,7 @@ const Cart = () => {
               <span>₹{marketplaceFee}</span>
             </p>
 
-            {deliveryCharge === 0 && (
+            {deliveryCharge === 0 && itemsTotal > 0 && (
               <p className="saving-line">
                 FREE Delivery
                 <span>-₹80</span>
@@ -185,14 +244,17 @@ const Cart = () => {
               <span>₹{orderTotal}</span>
             </h2>
 
-            <Link
-              to="/checkout"
+            <button
               className="checkout-btn"
+              onClick={proceedCheckout}
+              disabled={selectedItems.length === 0}
             >
-              Proceed to Checkout
-            </Link>
+              {selectedItems.length === 0
+                ? "Select Items"
+                : "Proceed to Checkout"}
+            </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

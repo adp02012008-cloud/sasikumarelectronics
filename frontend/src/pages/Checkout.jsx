@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
@@ -6,6 +6,7 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   const [cart, setCart] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [address, setAddress] = useState({
@@ -19,13 +20,24 @@ const Checkout = () => {
   });
 
   useEffect(() => {
-    fetchCart();
+    const stored = JSON.parse(
+      localStorage.getItem("checkoutItems") || "[]"
+    );
+
+    setSelectedIds(stored);
+    fetchCart(stored);
   }, []);
 
-  const fetchCart = async () => {
+  const fetchCart = async (ids) => {
     try {
       const res = await API.get("/cart");
-      setCart(res.data.cart.items || []);
+      const allItems = res.data.cart.items || [];
+
+      const selectedItems = allItems.filter((item) =>
+        ids.includes(item.product._id)
+      );
+
+      setCart(selectedItems);
     } catch (error) {
       console.log(error);
     }
@@ -38,11 +50,20 @@ const Checkout = () => {
     });
   };
 
-  const total = cart.reduce(
-    (sum, item) =>
-      sum + item.product.price * item.quantity,
-    0
-  );
+  const itemsTotal = useMemo(() => {
+    return cart.reduce(
+      (sum, item) => sum + item.product.price * item.quantity,
+      0
+    );
+  }, [cart]);
+
+  const deliveryCharge =
+    itemsTotal > 0 && itemsTotal < 1000 ? 80 : 0;
+
+  const marketplaceFee = itemsTotal > 0 ? 5 : 0;
+
+  const total =
+    itemsTotal + deliveryCharge + marketplaceFee;
 
   const validateAddress = () => {
     if (
@@ -66,8 +87,9 @@ const Checkout = () => {
   };
 
   const handlePayment = async () => {
-    if (total <= 0) {
-      alert("Cart is empty");
+    if (cart.length === 0) {
+      alert("No selected items found. Go back to cart and select items.");
+      navigate("/cart");
       return;
     }
 
@@ -116,7 +138,11 @@ const Checkout = () => {
               totalPrice: total,
             });
 
-            await API.delete("/cart/clear");
+            await API.post("/cart/remove-selected", {
+              productIds: selectedIds,
+            });
+
+            localStorage.removeItem("checkoutItems");
 
             alert("Payment successful. Order placed.");
             navigate("/orders");
@@ -124,7 +150,7 @@ const Checkout = () => {
             console.log(error);
             alert(
               error.response?.data?.message ||
-              "Payment completed, but order creation failed. Please contact admin."
+                "Payment completed, but order creation failed. Please contact admin."
             );
           } finally {
             setLoading(false);
@@ -160,10 +186,15 @@ const Checkout = () => {
     <div className="checkout-page">
       <div className="checkout-card checkout-wide">
         <h1>Checkout</h1>
-        <p>Enter delivery details before payment</p>
+        <p>Only selected cart items will be ordered.</p>
 
         {cart.length === 0 ? (
-          <h3>Your cart is empty</h3>
+          <div>
+            <h3>No selected items found</h3>
+            <button onClick={() => navigate("/cart")}>
+              Back to Cart
+            </button>
+          </div>
         ) : (
           <>
             <div className="checkout-section">
@@ -227,6 +258,18 @@ const Checkout = () => {
               ))}
 
               <hr />
+
+              <p>
+                Items Total: ₹{itemsTotal}
+              </p>
+
+              <p>
+                Delivery: ₹{deliveryCharge}
+              </p>
+
+              <p>
+                Marketplace Fee: ₹{marketplaceFee}
+              </p>
 
               <h2>Total: ₹{total}</h2>
 
