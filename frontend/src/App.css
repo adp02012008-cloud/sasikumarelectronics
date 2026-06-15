@@ -1839,3 +1839,434 @@ td{
   }
 
 }
+
+/* ==========================================
+   FINAL PROFESSIONAL MOBILE RESPONSIVE FIX
+========================================== */
+
+@media (max-width:768px){
+
+
+/* ---------- GLOBAL ---------- */
+
+body{
+    overflow-x:hidden;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+
+/* ---------- TOP NAVBAR ---------- */
+
+
+.top-navbar{
+    width:100%;
+    padding:15px;
+}
+
+
+.nav-container{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    align-items:center;
+}
+
+
+.website-logo{
+    width:90px;
+    height:auto;
+}
+
+
+.nav-search-wrap{
+    width:100%;
+}
+
+
+.nav-search{
+    width:100%;
+    display:flex;
+}
+
+
+.nav-search input{
+    flex:1;
+    height:50px;
+    font-size:14px;
+}
+
+
+.nav-search button{
+    width:120px;
+    height:50px;
+}
+
+
+.nav-account{
+    display:flex;
+    gap:15px;
+}
+
+
+
+/* ---------- CATEGORY NAV ---------- */
+
+
+.category-navbar{
+    overflow-x:auto;
+    justify-content:flex-start;
+    padding:15px;
+    gap:25px;
+}
+
+
+.category-navbar a{
+    white-space:nowrap;
+}
+
+
+
+
+/* ---------- CART PAGE ---------- */
+
+
+.cart-page{
+    padding:15px;
+}
+
+
+.cart-top-box{
+    width:100%;
+    padding:25px;
+    border-radius:15px;
+}
+
+
+.cart-layout{
+    display:flex;
+    flex-direction:column;
+    gap:25px;
+}
+
+
+.cart-list{
+    width:100%;
+}
+
+
+.pro-cart-item,
+.cart-item{
+
+    display:grid;
+
+    grid-template-columns:35px 110px 1fr;
+
+    gap:15px;
+
+    align-items:center;
+
+    padding:20px;
+
+    border-radius:16px;
+
+}
+
+
+
+.cart-item img{
+
+    width:100px;
+
+    height:100px;
+
+    object-fit:contain;
+
+}
+
+
+
+.cart-info h3{
+
+    font-size:18px;
+
+}
+
+
+.cart-info h2{
+
+    font-size:22px;
+
+}
+
+
+
+.qty-box{
+
+    width:120px;
+
+}
+
+
+.cart-actions{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+
+
+.cart-summary{
+
+    width:100%;
+
+    padding:25px;
+
+    border-radius:16px;
+
+}
+
+
+
+.checkout-btn{
+
+    width:100%;
+
+}
+
+
+
+
+/* ---------- ACCOUNT / WISHLIST ---------- */
+
+
+.account-layout{
+
+    display:flex;
+
+    flex-direction:column;
+
+    padding:15px;
+
+    gap:20px;
+
+}
+
+
+
+.account-sidebar{
+
+    width:100%;
+
+    border-radius:15px;
+
+}
+
+
+
+.account-sidebar button{
+
+    width:100%;
+
+}
+
+
+
+.wishlist-page{
+
+    width:100%;
+
+}
+
+
+
+.wishlist-row{
+
+    display:grid;
+
+    grid-template-columns:130px 1fr;
+
+    gap:20px;
+
+    position:relative;
+
+}
+
+
+
+.wishlist-row img{
+
+    width:120px;
+
+    height:120px;
+
+    object-fit:contain;
+
+}
+
+
+
+.wishlist-info h3{
+
+    font-size:20px;
+
+}
+
+
+
+.wishlist-info h2{
+
+    font-size:25px;
+
+}
+
+
+
+.wishlist-actions{
+
+    display:flex;
+
+    gap:10px;
+
+}
+
+
+
+.trash-btn{
+
+    position:absolute;
+
+    right:15px;
+
+    top:50%;
+
+}
+
+
+
+
+/* ---------- PRODUCT GRID ---------- */
+
+
+.product-grid{
+
+    grid-template-columns:1fr;
+
+    padding:15px;
+
+}
+
+
+
+.product-card{
+
+    width:100%;
+
+}
+
+
+
+/* ---------- CHECKOUT ---------- */
+
+
+.checkout-page{
+
+    padding:15px;
+
+}
+
+
+
+.checkout-card{
+
+    width:100%;
+
+}
+
+
+
+.checkout-form{
+
+    grid-template-columns:1fr;
+
+}
+
+
+
+/* ---------- ORDERS ---------- */
+
+
+.orders-layout{
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+
+
+.orders-filter{
+
+    width:100%;
+
+}
+
+
+
+.flipkart-order-card{
+
+    display:flex;
+
+    flex-direction:column;
+
+    text-align:center;
+
+}
+
+
+
+.flipkart-order-card img{
+
+    margin:auto;
+
+}
+
+
+
+/* ---------- ADMIN TABLE FIX ---------- */
+
+
+.table-box{
+
+    overflow-x:auto;
+
+}
+
+
+table{
+
+    min-width:700px;
+
+}
+
+
+
+/* bottom space for mobile menu */
+
+
+body{
+
+    padding-bottom:80px;
+
+}
+
+
+
+}
