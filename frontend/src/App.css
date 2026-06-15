@@ -2468,3 +2468,52 @@ body{
     max-width:100%;
   }
 }
+
+@media (max-width:768px){
+
+  .pro-cart-item{
+    grid-template-columns:32px 105px 1fr;
+    padding:18px 10px;
+  }
+
+  .cart-actions{
+    grid-column:1 / -1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    margin-top:12px;
+  }
+
+  .qty-box{
+    width:130px;
+    height:38px;
+  }
+
+  .cart-delete-btn,
+  .cart-save-btn{
+    min-width:70px;
+    height:38px;
+    border:1px solid #d1d5db;
+    border-radius:20px;
+    background:white;
+    color:#2563eb;
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .cart-info h3{
+    font-size:17px;
+    max-width:155px;
+  }
+
+  .cart-page{
+    padding-left:14px;
+    padding-right:14px;
+  }
+
+  .cart-summary{
+    margin-bottom:25px;
+  }
+
+}
