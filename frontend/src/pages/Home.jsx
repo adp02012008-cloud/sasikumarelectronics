@@ -5,7 +5,7 @@ const Home = () => {
     <div className="home-page">
       <section className="hero industrial-hero">
         <div>
-          <h1>Industrial & Automobile Electronics</h1>
+          <h1>Sasikumar Electronics</h1>
 
           <h2>Reliable Electrical Products for Bikes, Cars & Workshops</h2>
 

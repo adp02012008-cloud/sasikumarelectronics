@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import API from "../api/axios";
+import logo from "../assets/logo.png";
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -59,8 +60,11 @@ const Navbar = () => {
       <header className="top-navbar">
         <div className="nav-container">
           <Link to="/" className="brand-logo">
-            <span>⚡</span>
-            Sasikumar Electronics
+            <img
+                src={logo}
+                alt="Sasikumar Electronics Logo"
+                className="website-logo"
+            />
           </Link>
 
           <div className="nav-search-wrap">

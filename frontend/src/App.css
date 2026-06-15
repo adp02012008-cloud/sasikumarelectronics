@@ -44,14 +44,15 @@ img{
 }
 
 .brand-logo{
-  color:white;
-  font-size:28px;
-  font-weight:900;
-  white-space:nowrap;
+  display:flex;
+  align-items:center;
 }
 
-.brand-logo span{
-  color:#f97316;
+
+.website-logo{
+  width:230px;
+  height:65px;
+  object-fit:contain;
 }
 
 .nav-search-wrap{
@@ -1691,6 +1692,11 @@ td{
   body{
     padding-bottom:75px;
   }
+
+  .website-logo{
+    width:170px;
+    height:55px;
+    }
 
 
   .top-navbar{
