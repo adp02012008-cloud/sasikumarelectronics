@@ -10,6 +10,7 @@ const Navbar = () => {
 
   const [keyword, setKeyword] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
 
   const isAdmin = user?.role === "admin";
 
@@ -20,6 +21,25 @@ const Navbar = () => {
 
     return () => clearTimeout(timer);
   }, [keyword]);
+
+  useEffect(() => {
+    if (user && !isAdmin) {
+      fetchCartCount();
+    } else {
+      setCartCount(0);
+    }
+  }, [user]);
+
+  const fetchCartCount = async () => {
+    try {
+      const res = await API.get("/cart");
+      const items = res.data.cart?.items || [];
+      const totalQty = items.reduce((acc, item) => acc + (item.quantity || 1), 0);
+      setCartCount(totalQty);
+    } catch {
+      setCartCount(0);
+    }
+  };
 
   const fetchSuggestions = async () => {
     try {
@@ -121,13 +141,16 @@ const Navbar = () => {
       </header>
 
       <nav className="category-navbar">
-        <Link to="/">Home</Link>
-        <Link to="/products">Products</Link>
+        <Link to="/">Products Catalog</Link>
 
         {user && !isAdmin && (
           <>
+            <Link to="/profile">My Profile</Link>
             <Link to="/wishlist">Wishlist</Link>
-            <Link to="/cart">Cart</Link>
+            <Link to="/cart" className="cart-nav-link">
+              <span>Cart</span>
+              {cartCount > 0 && <span className="nav-cart-badge">{cartCount}</span>}
+            </Link>
             <Link to="/orders">Orders</Link>
           </>
         )}
@@ -165,18 +188,18 @@ const Navbar = () => {
         {!user && (
           <>
             <Link to="/">
-              🏠
-              <span>Home</span>
-            </Link>
-
-            <Link to="/products">
               🔎
               <span>Shop</span>
             </Link>
 
             <Link to="/login">
-              👤
+              🔑
               <span>Login</span>
+            </Link>
+
+            <Link to="/register">
+              📝
+              <span>Register</span>
             </Link>
           </>
         )}
@@ -184,11 +207,6 @@ const Navbar = () => {
         {user && !isAdmin && (
           <>
             <Link to="/">
-              🏠
-              <span>Home</span>
-            </Link>
-
-            <Link to="/products">
               🔎
               <span>Shop</span>
             </Link>
@@ -206,6 +224,11 @@ const Navbar = () => {
             <Link to="/wishlist">
               ❤️
               <span>Wishlist</span>
+            </Link>
+
+            <Link to="/profile">
+              👤
+              <span>Profile</span>
             </Link>
           </>
         )}

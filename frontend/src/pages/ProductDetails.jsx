@@ -208,8 +208,6 @@ const ProductDetails = () => {
             </button>
 
             <img src={selectedImage} alt={product.name} />
-
-            <p>Click thumbnails to view full image</p>
           </div>
         </div>
 

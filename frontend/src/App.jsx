@@ -3,7 +3,7 @@ import {
   Route,
 } from "react-router-dom";
 
-import Home from "./pages/Home";
+import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Products from "./pages/Products";
@@ -31,9 +31,18 @@ function App() {
       <Navbar />
 
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Products />} />
 
         <Route path="/products" element={<Products />} />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/products/:id" element={<ProductDetails />} />
 
