@@ -20,8 +20,16 @@ passport.use(
         let user = await User.findOne({ email });
 
         if (user) {
+          let updated = false;
           if (!user.googleId) {
             user.googleId = profile.id;
+            updated = true;
+          }
+          if (profile.displayName && (!user.name || user.name.trim().length <= 2 || user.name === "a")) {
+            user.name = profile.displayName;
+            updated = true;
+          }
+          if (updated) {
             await user.save();
           }
 
@@ -29,7 +37,7 @@ passport.use(
         }
 
         user = await User.create({
-          name: profile.displayName,
+          name: profile.displayName || email.split("@")[0],
           email,
           googleId: profile.id,
         });

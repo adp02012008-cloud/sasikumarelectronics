@@ -4,7 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import API from "../api/axios";
 
 const Profile = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, updateUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [profileData, setProfileData] = useState(null);
@@ -41,14 +41,33 @@ const Profile = () => {
     fetchProfile();
   }, []);
 
+  const formatNameFromEmail = (emailStr) => {
+    if (!emailStr) return "User Profile";
+    const prefix = emailStr.split("@")[0];
+    const parts = prefix.split(/[._-]/).filter(Boolean);
+    return parts
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(" ");
+  };
+
   const fetchProfile = async () => {
     try {
       setLoading(true);
       const res = await API.get("/users/profile");
-      const uData = res.data.user || user;
+      let uData = res.data.user || user;
+
+      // If user name is single character 'a' or empty, auto-format a clean full name from their email address
+      if (!uData.name || uData.name.trim().length <= 2 || uData.name === "a") {
+        const formattedName = formatNameFromEmail(uData.email);
+        uData.name = formattedName;
+        // Optionally sync to backend silently
+        API.put("/users/profile", { name: formattedName, email: uData.email }).catch(() => {});
+      }
+
       setProfileData(uData);
       setName(uData.name || "");
       setEmail(uData.email || "");
+      if (updateUser) updateUser(uData);
     } catch (err) {
       console.log(err);
       setMessage({ type: "error", text: "Failed to load user profile." });
@@ -64,7 +83,7 @@ const Profile = () => {
       setMessage({ type: "", text: "" });
       const res = await API.put("/users/profile", { name, email });
       setProfileData(res.data.user);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      if (updateUser) updateUser(res.data.user);
       setMessage({ type: "success", text: "Profile details updated successfully!" });
     } catch (err) {
       setMessage({

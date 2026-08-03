@@ -140,56 +140,26 @@ export const AuthProvider =
 
 
 
+  const updateUser = (newUserData) => {
+    const updated = { ...user, ...newUserData };
+    localStorage.setItem("user", JSON.stringify(updated));
+    setUser(updated);
+  };
 
- return(
-
-
-
- <AuthContext.Provider
-
-
-  value={{
-
-
-   user,
-
-
-   login,
-
-
-   logout,
-
-
-
-   isAuthenticated:
-   !!user,
-
-
-
-   isAdmin:
-
-   user?.role ===
-   "admin"
-
-
-
-  }}
-
-
-
- >
-
-
-
-  {children}
-
-
-
- </AuthContext.Provider>
-
-
-
- );
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        updateUser,
+        isAuthenticated: !!user,
+        isAdmin: user?.role === "admin",
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 
 
 
