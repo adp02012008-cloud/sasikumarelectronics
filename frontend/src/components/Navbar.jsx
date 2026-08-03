@@ -141,16 +141,27 @@ const Navbar = () => {
       </header>
 
       <nav className="category-navbar">
-        <Link to="/">Products Catalog</Link>
+        <Link to="/">Products</Link>
 
         {user && !isAdmin && (
           <>
-            <Link to="/profile">My Profile</Link>
-            <Link to="/wishlist">Wishlist</Link>
             <Link to="/cart" className="cart-nav-link">
               <span>Cart</span>
               {cartCount > 0 && <span className="nav-cart-badge">{cartCount}</span>}
             </Link>
+            <Link to="/wishlist">Wishlist</Link>
+            <Link to="/orders">Orders</Link>
+            <Link to="/profile">Profile</Link>
+          </>
+        )}
+
+        {!user && (
+          <>
+            <Link to="/cart" className="cart-nav-link">
+              <span>Cart</span>
+              {cartCount > 0 && <span className="nav-cart-badge">{cartCount}</span>}
+            </Link>
+            <Link to="/wishlist">Wishlist</Link>
             <Link to="/orders">Orders</Link>
           </>
         )}
@@ -189,7 +200,7 @@ const Navbar = () => {
           <>
             <Link to="/">
               🔎
-              <span>Shop</span>
+              <span>Products</span>
             </Link>
 
             <Link to="/login">
@@ -208,7 +219,7 @@ const Navbar = () => {
           <>
             <Link to="/">
               🔎
-              <span>Shop</span>
+              <span>Products</span>
             </Link>
 
             <Link to="/cart">
@@ -216,14 +227,14 @@ const Navbar = () => {
               <span>Cart</span>
             </Link>
 
-            <Link to="/orders">
-              📦
-              <span>Orders</span>
-            </Link>
-
             <Link to="/wishlist">
               ❤️
               <span>Wishlist</span>
+            </Link>
+
+            <Link to="/orders">
+              📦
+              <span>Orders</span>
             </Link>
 
             <Link to="/profile">
