@@ -133,7 +133,30 @@ const Navbar = () => {
 
           <div className="nav-account">
             {user ? (
-              <button onClick={handleLogout}>Logout</button>
+              <div className="user-profile-badge-nav">
+                <Link to="/profile" className="nav-user-link">
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="nav-user-photo"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="nav-user-initial">
+                      {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                  )}
+                  <span className="nav-user-name">
+                    Hello, {user.name ? user.name.split(" ")[0] : "Account"}
+                  </span>
+                </Link>
+                <button className="nav-logout-btn" onClick={handleLogout}>
+                  Logout
+                </button>
+              </div>
             ) : (
               <>
                 <Link to="/login">Login</Link>

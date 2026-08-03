@@ -180,7 +180,18 @@ const Profile = () => {
       <div className="profile-container">
         {/* Banner / Header */}
         <div className="profile-header-card">
-          <div className="profile-avatar">{initial}</div>
+          {profileData?.avatar ? (
+            <img
+              src={profileData.avatar}
+              alt={profileData.name}
+              className="profile-avatar-photo"
+              onError={(e) => {
+                e.target.style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="profile-avatar">{initial}</div>
+          )}
           <div className="profile-user-info">
             <h2>{profileData?.name || "User Profile"}</h2>
             <p className="profile-email">📧 {profileData?.email}</p>

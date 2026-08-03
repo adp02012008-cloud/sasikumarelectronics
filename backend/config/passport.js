@@ -17,6 +17,7 @@ passport.use(
           return done(null, false);
         }
 
+        const photoUrl = profile.photos?.[0]?.value || "";
         let user = await User.findOne({ email });
 
         if (user) {
@@ -27,6 +28,10 @@ passport.use(
           }
           if (profile.displayName && (!user.name || user.name.trim().length <= 2 || user.name === "a")) {
             user.name = profile.displayName;
+            updated = true;
+          }
+          if (photoUrl && (!user.avatar || user.avatar !== photoUrl)) {
+            user.avatar = photoUrl;
             updated = true;
           }
           if (updated) {
@@ -40,6 +45,7 @@ passport.use(
           name: profile.displayName || email.split("@")[0],
           email,
           googleId: profile.id,
+          avatar: photoUrl,
         });
 
         return done(null, user);

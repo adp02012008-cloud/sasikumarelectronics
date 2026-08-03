@@ -26,6 +26,7 @@ const sendTokenResponse = (res, user, statusCode = 200) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      avatar: user.avatar || "",
     },
   });
 };
@@ -135,6 +136,7 @@ exports.googleCallback = (req, res) => {
       name: req.user.name,
       email: req.user.email,
       role: req.user.role,
+      avatar: req.user.avatar || "",
     })
   );
 

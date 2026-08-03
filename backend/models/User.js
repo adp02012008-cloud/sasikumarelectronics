@@ -64,6 +64,11 @@ new mongoose.Schema(
       type:String
     },
 
+    avatar:{
+      type:String,
+      default:""
+    },
+
 
     role:{
       type:String,
