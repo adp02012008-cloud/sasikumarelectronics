@@ -139,7 +139,7 @@ const Checkout = () => {
     });
   };
 
-  const marketplaceFee = itemsTotal > 0 ? 5 : 0;
+  const marketplaceFee = Math.round(itemsTotal * 0.02);
   const total = itemsTotal + deliveryCharge + marketplaceFee;
 
   const validateAddress = () => {
@@ -474,7 +474,7 @@ const Checkout = () => {
               </div>
 
               <div className="summary-row">
-                <span>Marketplace Fee:</span>
+                <span>Marketplace Fee (2%):</span>
                 <span>₹{marketplaceFee}</span>
               </div>
 

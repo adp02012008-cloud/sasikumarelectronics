@@ -111,7 +111,7 @@ const Cart = () => {
     }
   };
 
-  const marketplaceFee = itemsTotal > 0 ? 5 : 0;
+  const marketplaceFee = Math.round(itemsTotal * 0.02);
 
   const orderTotal =
     itemsTotal + deliveryCharge + marketplaceFee;
@@ -279,7 +279,7 @@ const Cart = () => {
             </p>
 
             <p>
-              Marketplace Fee:
+              Marketplace Fee (2%):
               <span>₹{marketplaceFee}</span>
             </p>
 
