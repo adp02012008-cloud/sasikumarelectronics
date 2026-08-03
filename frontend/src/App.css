@@ -904,13 +904,23 @@ footer p{
   }
 
   .website-logo-circle {
-    width: 36px;
-    height: 36px;
-    border-width: 1.5px;
+    width: 38px;
+    height: 38px;
+    border-width: 2px;
   }
 
   .brand-text-wrap {
-    display: none;
+    display: flex !important;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .brand-title-gold {
+    font-size: 17px;
+  }
+
+  .brand-title-white {
+    font-size: 13px;
   }
 
   .nav-search-wrap {
@@ -3873,6 +3883,56 @@ td{
   font-size: 14px;
   color: #64748b;
   margin-bottom: 8px;
+  word-break: break-all;
+}
+
+@media (max-width: 768px) {
+  .profile-page-wrapper {
+    padding: 16px 12px 80px;
+  }
+
+  .profile-header-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px 16px;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-user-info {
+    width: 100%;
+  }
+
+  .profile-user-info h2 {
+    font-size: 20px;
+    word-break: break-word;
+  }
+
+  .profile-email {
+    font-size: 12.5px;
+    word-break: break-all;
+  }
+
+  .profile-logout-btn {
+    width: 100%;
+    max-width: 220px;
+    margin: 4px auto 0;
+  }
+
+  .section-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .section-card-header button {
+    width: 100%;
+  }
+
+  .profile-section-card {
+    padding: 16px;
+  }
 }
 
 .profile-role-badge {
