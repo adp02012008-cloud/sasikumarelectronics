@@ -115,15 +115,15 @@ const Cart = () => {
     itemsTotal + deliveryCharge + marketplaceFee;
 
   const proceedCheckout = () => {
-    if (selectedItems.length === 0) {
-      alert("Please select at least one item");
+    const itemsToCheckout = selectedCartItems.length > 0 ? selectedCartItems : validCart;
+
+    if (itemsToCheckout.length === 0) {
+      alert("Your cart is empty");
       return;
     }
 
-    localStorage.setItem(
-      "checkoutItems",
-      JSON.stringify(selectedItems)
-    );
+    const ids = itemsToCheckout.map((item) => item.product._id);
+    localStorage.setItem("checkoutItems", JSON.stringify(ids));
 
     navigate("/checkout");
   };

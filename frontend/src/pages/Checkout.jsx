@@ -27,16 +27,50 @@ const Checkout = () => {
 
     setSelectedIds(stored);
     fetchCart(stored);
+    fetchUserProfile();
   }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const res = await API.get("/users/profile");
+      const uData = res.data.user;
+      if (uData) {
+        const savedAddress = uData.addresses?.[0] || {};
+        setAddress((prev) => ({
+          ...prev,
+          fullName: uData.name || prev.fullName,
+          phone: savedAddress.phone || prev.phone,
+          address: savedAddress.street || prev.address,
+          city: savedAddress.city || prev.city,
+          state: savedAddress.state || prev.state,
+          pincode: savedAddress.postalCode || prev.pincode,
+          country: savedAddress.country || "India",
+        }));
+      }
+    } catch {
+      // User profile optional
+    }
+  };
 
   const fetchCart = async (ids) => {
     try {
       const res = await API.get("/cart");
-      const allItems = res.data.cart.items || [];
+      const allItems = (res.data.cart?.items || []).filter(item => item.product);
 
-      const selectedItems = allItems.filter((item) =>
-        ids.includes(item.product._id)
-      );
+      let selectedItems = [];
+      if (ids && ids.length > 0) {
+        selectedItems = allItems.filter((item) => {
+          const itemProdId = item.product._id ? item.product._id.toString() : item.product.toString();
+          return ids.some((id) => id.toString() === itemProdId);
+        });
+      }
+
+      // Fallback: If no items matched stored selection or no selection exists, use all items in cart
+      if (selectedItems.length === 0 && allItems.length > 0) {
+        selectedItems = allItems;
+        const allIds = allItems.map((item) => item.product._id ? item.product._id.toString() : item.product.toString());
+        setSelectedIds(allIds);
+      }
 
       setCart(selectedItems);
     } catch (error) {
