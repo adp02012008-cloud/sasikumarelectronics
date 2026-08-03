@@ -10,6 +10,12 @@ const Checkout = () => {
   const [deliveryCharge, setDeliveryCharge] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  // Address states
+  const [userProfile, setUserProfile] = useState(null);
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressIdx, setSelectedAddressIdx] = useState(0);
+  const [isManualAddress, setIsManualAddress] = useState(false);
+
   const [address, setAddress] = useState({
     fullName: "",
     phone: "",
@@ -35,40 +41,62 @@ const Checkout = () => {
       const res = await API.get("/users/profile");
       const uData = res.data.user;
       if (uData) {
-        const savedAddress = uData.addresses?.[0] || {};
-        setAddress((prev) => ({
-          ...prev,
-          fullName: uData.name || prev.fullName,
-          phone: savedAddress.phone || prev.phone,
-          address: savedAddress.street || prev.address,
-          city: savedAddress.city || prev.city,
-          state: savedAddress.state || prev.state,
-          pincode: savedAddress.postalCode || prev.pincode,
-          country: savedAddress.country || "India",
-        }));
+        setUserProfile(uData);
+        const addrs = uData.addresses || [];
+        setSavedAddresses(addrs);
+
+        if (addrs.length > 0) {
+          applyAddress(addrs[0], uData.name);
+          setSelectedAddressIdx(0);
+          setIsManualAddress(false);
+        } else {
+          setIsManualAddress(true);
+          setAddress((prev) => ({ ...prev, fullName: uData.name || "" }));
+        }
       }
     } catch {
-      // User profile optional
+      setIsManualAddress(true);
     }
+  };
+
+  const applyAddress = (addrObj, userName = "") => {
+    setAddress({
+      fullName: userName || userProfile?.name || address.fullName || "",
+      phone: addrObj.phone || "",
+      address: addrObj.street || "",
+      city: addrObj.city || "",
+      state: addrObj.state || "",
+      pincode: addrObj.postalCode || "",
+      country: addrObj.country || "India",
+    });
+  };
+
+  const handleSelectSavedAddress = (idx) => {
+    setSelectedAddressIdx(idx);
+    setIsManualAddress(false);
+    applyAddress(savedAddresses[idx]);
   };
 
   const fetchCart = async (ids) => {
     try {
       const res = await API.get("/cart");
-      const allItems = (res.data.cart?.items || []).filter(item => item.product);
+      const allItems = (res.data.cart?.items || []).filter((item) => item.product);
 
       let selectedItems = [];
       if (ids && ids.length > 0) {
         selectedItems = allItems.filter((item) => {
-          const itemProdId = item.product._id ? item.product._id.toString() : item.product.toString();
+          const itemProdId = item.product._id
+            ? item.product._id.toString()
+            : item.product.toString();
           return ids.some((id) => id.toString() === itemProdId);
         });
       }
 
-      // Fallback: If no items matched stored selection or no selection exists, use all items in cart
       if (selectedItems.length === 0 && allItems.length > 0) {
         selectedItems = allItems;
-        const allIds = allItems.map((item) => item.product._id ? item.product._id.toString() : item.product.toString());
+        const allIds = allItems.map((item) =>
+          item.product._id ? item.product._id.toString() : item.product.toString()
+        );
         setSelectedIds(allIds);
       }
 
@@ -80,8 +108,7 @@ const Checkout = () => {
 
   const itemsTotal = useMemo(() => {
     return cart.reduce(
-      (sum, item) =>
-        sum + item.product.price * item.quantity,
+      (sum, item) => sum + item.product.price * item.quantity,
       0
     );
   }, [cart]);
@@ -97,13 +124,8 @@ const Checkout = () => {
         return;
       }
 
-      const res = await API.get(
-        `/delivery/calculate?subtotal=${itemsTotal}`
-      );
-
-      setDeliveryCharge(
-        res.data.deliveryCharge || 0
-      );
+      const res = await API.get(`/delivery/calculate?subtotal=${itemsTotal}`);
+      setDeliveryCharge(res.data.deliveryCharge || 0);
     } catch (error) {
       console.log(error);
       setDeliveryCharge(0);
@@ -117,11 +139,8 @@ const Checkout = () => {
     });
   };
 
-  const marketplaceFee =
-    itemsTotal > 0 ? 5 : 0;
-
-  const total =
-    itemsTotal + deliveryCharge + marketplaceFee;
+  const marketplaceFee = itemsTotal > 0 ? 5 : 0;
+  const total = itemsTotal + deliveryCharge + marketplaceFee;
 
   const validateAddress = () => {
     if (
@@ -132,12 +151,12 @@ const Checkout = () => {
       !address.state ||
       !address.pincode
     ) {
-      alert("Please fill all delivery details");
+      alert("Please fill all delivery address details");
       return false;
     }
 
     if (address.phone.length < 10) {
-      alert("Enter valid phone number");
+      alert("Please enter a valid phone number");
       return false;
     }
 
@@ -146,9 +165,7 @@ const Checkout = () => {
 
   const handlePayment = async () => {
     if (cart.length === 0) {
-      alert(
-        "No selected items found. Go back to cart and select items."
-      );
+      alert("No selected items found. Go back to cart and select items.");
       navigate("/cart");
       return;
     }
@@ -160,12 +177,9 @@ const Checkout = () => {
     try {
       setLoading(true);
 
-      const { data } = await API.post(
-        "/payment/create-order",
-        {
-          amount: total,
-        }
-      );
+      const { data } = await API.post("/payment/create-order", {
+        amount: total,
+      });
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -178,12 +192,9 @@ const Checkout = () => {
         handler: async function (response) {
           try {
             await API.post("/payment/verify", {
-              razorpay_order_id:
-                response.razorpay_order_id,
-              razorpay_payment_id:
-                response.razorpay_payment_id,
-              razorpay_signature:
-                response.razorpay_signature,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
             });
 
             await API.post("/orders", {
@@ -197,10 +208,8 @@ const Checkout = () => {
               paymentMethod: "Razorpay",
 
               paymentInfo: {
-                razorpayOrderId:
-                  response.razorpay_order_id,
-                razorpayPaymentId:
-                  response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
               },
 
               totalPrice: total,
@@ -212,13 +221,13 @@ const Checkout = () => {
 
             localStorage.removeItem("checkoutItems");
 
-            alert("Payment successful. Order placed.");
+            alert("Payment successful. Order placed!");
             navigate("/orders");
           } catch (error) {
             console.log(error);
             alert(
               error.response?.data?.message ||
-                "Payment completed, but order creation failed. Please contact admin."
+                "Payment completed, but order creation failed. Please contact support."
             );
           } finally {
             setLoading(false);
@@ -241,126 +250,249 @@ const Checkout = () => {
         },
       };
 
-      const razorpay =
-        new window.Razorpay(options);
-
+      const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
       console.log(error);
-      alert(
-        error.response?.data?.message ||
-          "Payment Failed"
-      );
+      alert(error.response?.data?.message || "Payment Failed");
       setLoading(false);
     }
   };
 
+  if (cart.length === 0) {
+    return (
+      <div className="pro-checkout-wrapper">
+        <div className="pro-checkout-empty">
+          <h2>Your Checkout is Empty</h2>
+          <p>Please select products from your cart to proceed with order checkout.</p>
+          <button className="btn-submit-yellow" onClick={() => navigate("/cart")}>
+            Return to Shopping Cart
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="checkout-page">
-      <div className="checkout-card checkout-wide">
-        <h1>Checkout</h1>
-        <p>Only selected cart items will be ordered.</p>
+    <div className="pro-checkout-wrapper">
+      <div className="pro-checkout-container">
+        {/* Left Column: Delivery Address & Order Review */}
+        <div className="checkout-main-col">
+          {/* Section 1: Delivery Address */}
+          <div className="checkout-block-card">
+            <div className="block-header">
+              <span className="step-num">1</span>
+              <h2>Select Delivery Address</h2>
+            </div>
 
-        {cart.length === 0 ? (
-          <div>
-            <h3>No selected items found</h3>
+            {/* Saved Profile Addresses */}
+            {savedAddresses.length > 0 && (
+              <div className="saved-addresses-selector">
+                <p className="sub-instruction">Choose from your saved profile addresses:</p>
+                <div className="saved-cards-grid">
+                  {savedAddresses.map((addr, idx) => (
+                    <div
+                      key={idx}
+                      className={`saved-addr-card ${
+                        !isManualAddress && selectedAddressIdx === idx ? "active-card" : ""
+                      }`}
+                      onClick={() => handleSelectSavedAddress(idx)}
+                    >
+                      <div className="card-top-radio">
+                        <input
+                          type="radio"
+                          name="addressSelection"
+                          checked={!isManualAddress && selectedAddressIdx === idx}
+                          onChange={() => handleSelectSavedAddress(idx)}
+                        />
+                        <b>Address #{idx + 1}</b>
+                      </div>
+                      <p className="addr-street">{addr.street}</p>
+                      <p className="addr-city">
+                        {addr.city}{addr.state ? `, ${addr.state}` : ""} - {addr.postalCode}
+                      </p>
+                      {addr.phone && <p className="addr-phone">📞 {addr.phone}</p>}
+                    </div>
+                  ))}
+                </div>
 
-            <button onClick={() => navigate("/cart")}>
-              Back to Cart
-            </button>
+                <div className="manual-toggle-row">
+                  <button
+                    className="btn-toggle-manual"
+                    onClick={() => {
+                      setIsManualAddress(true);
+                      setAddress((prev) => ({
+                        ...prev,
+                        phone: "",
+                        address: "",
+                        city: "",
+                        state: "",
+                        pincode: "",
+                      }));
+                    }}
+                  >
+                    {isManualAddress ? "✓ Entering Manual Address" : "+ Use / Add a Different Address"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Manual / Editing Address Form */}
+            {(isManualAddress || savedAddresses.length === 0) && (
+              <div className="manual-address-form">
+                <h3>Delivery Address Details</h3>
+                <div className="form-grid-2col">
+                  <div className="input-field-wrap">
+                    <label>Full Name</label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      placeholder="Full Name"
+                      value={address.fullName}
+                      onChange={handleAddressChange}
+                    />
+                  </div>
+
+                  <div className="input-field-wrap">
+                    <label>Phone Number</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      placeholder="10-digit Mobile Number"
+                      value={address.phone}
+                      onChange={handleAddressChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="input-field-wrap full-width">
+                  <label>House No, Street Name, Area</label>
+                  <textarea
+                    name="address"
+                    rows="3"
+                    placeholder="e.g. Door No 12/A, Gandhi Street, Anna Nagar"
+                    value={address.address}
+                    onChange={handleAddressChange}
+                  />
+                </div>
+
+                <div className="form-grid-3col">
+                  <div className="input-field-wrap">
+                    <label>City</label>
+                    <input
+                      type="text"
+                      name="city"
+                      placeholder="City"
+                      value={address.city}
+                      onChange={handleAddressChange}
+                    />
+                  </div>
+
+                  <div className="input-field-wrap">
+                    <label>State</label>
+                    <input
+                      type="text"
+                      name="state"
+                      placeholder="State"
+                      value={address.state}
+                      onChange={handleAddressChange}
+                    />
+                  </div>
+
+                  <div className="input-field-wrap">
+                    <label>Pincode</label>
+                    <input
+                      type="text"
+                      name="pincode"
+                      placeholder="Pincode"
+                      value={address.pincode}
+                      onChange={handleAddressChange}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          <>
-            <div className="checkout-section">
-              <h2>Delivery Address</h2>
 
-              <div className="checkout-form">
-                <input
-                  name="fullName"
-                  placeholder="Full Name"
-                  value={address.fullName}
-                  onChange={handleAddressChange}
-                />
+          {/* Section 2: Items in Order */}
+          <div className="checkout-block-card">
+            <div className="block-header">
+              <span className="step-num">2</span>
+              <h2>Review Order Items ({cart.length})</h2>
+            </div>
 
-                <input
-                  name="phone"
-                  placeholder="Phone Number"
-                  value={address.phone}
-                  onChange={handleAddressChange}
-                />
+            <div className="checkout-items-list">
+              {cart.map((item) => (
+                <div key={item._id} className="checkout-product-row">
+                  <div className="item-thumb-box">
+                    <img
+                      src={item.product.images?.[0]?.url || "/favicon.svg"}
+                      alt={item.product.name}
+                    />
+                  </div>
 
-                <textarea
-                  name="address"
-                  placeholder="House No, Street, Area"
-                  value={address.address}
-                  onChange={handleAddressChange}
-                />
+                  <div className="item-info">
+                    <h4>{item.product.name}</h4>
+                    <p className="item-category">{item.product.category}</p>
+                    <div className="item-price-qty">
+                      <span className="qty-tag">Qty: {item.quantity}</span>
+                      <span className="unit-price">₹{item.product.price} each</span>
+                    </div>
+                  </div>
 
-                <input
-                  name="city"
-                  placeholder="City"
-                  value={address.city}
-                  onChange={handleAddressChange}
-                />
+                  <div className="item-subtotal">
+                    ₹{item.product.price * item.quantity}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-                <input
-                  name="state"
-                  placeholder="State"
-                  value={address.state}
-                  onChange={handleAddressChange}
-                />
+        {/* Right Column: Order Summary Sidebar */}
+        <div className="checkout-summary-col">
+          <div className="checkout-summary-card">
+            <button
+              className="amazon-pay-btn"
+              onClick={handlePayment}
+              disabled={loading}
+            >
+              {loading ? "Opening Payment..." : `Proceed to Pay ₹${total}`}
+            </button>
 
-                <input
-                  name="pincode"
-                  placeholder="Pincode"
-                  value={address.pincode}
-                  onChange={handleAddressChange}
-                />
+            <div className="summary-breakdown">
+              <h3>Order Summary</h3>
+
+              <div className="summary-row">
+                <span>Items ({cart.length}):</span>
+                <span>₹{itemsTotal}</span>
+              </div>
+
+              <div className="summary-row">
+                <span>Delivery Charge:</span>
+                <span>{deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge}`}</span>
+              </div>
+
+              <div className="summary-row">
+                <span>Marketplace Fee:</span>
+                <span>₹{marketplaceFee}</span>
+              </div>
+
+              <hr className="summary-divider" />
+
+              <div className="summary-row total-row">
+                <span>Order Total:</span>
+                <span className="grand-total">₹{total}</span>
               </div>
             </div>
 
-            <div className="checkout-section">
-              <h2>Order Summary</h2>
-
-              {cart.map((item) => (
-                <div
-                  key={item._id}
-                  className="checkout-item"
-                >
-                  <span>{item.product.name}</span>
-                  <span>
-                    {item.quantity} × ₹
-                    {item.product.price}
-                  </span>
-                </div>
-              ))}
-
-              <hr />
-
-              <p>Items Total: ₹{itemsTotal}</p>
-
-              <p>
-                Delivery:{" "}
-                {deliveryCharge === 0
-                  ? "FREE"
-                  : `₹${deliveryCharge}`}
-              </p>
-
-              <p>Marketplace Fee: ₹{marketplaceFee}</p>
-
-              <h2>Total: ₹{total}</h2>
-
-              <button
-                onClick={handlePayment}
-                disabled={loading}
-              >
-                {loading
-                  ? "Processing..."
-                  : `Pay ₹${total}`}
-              </button>
+            <div className="trust-security-box">
+              <p className="trust-item">🔒 256-bit SSL Payment Protection</p>
+              <p className="trust-item">⚡ Instant Order Confirmation</p>
+              <p className="trust-item">🚚 Express Fast Delivery</p>
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );
