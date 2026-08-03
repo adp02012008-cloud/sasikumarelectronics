@@ -43,6 +43,8 @@ const Cart = () => {
           .filter((item) => item.product)
           .map((item) => item.product._id)
       );
+
+      window.dispatchEvent(new Event("cartUpdated"));
     } catch (error) {
       console.log(error);
     }

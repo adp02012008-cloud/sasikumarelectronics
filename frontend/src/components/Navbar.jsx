@@ -25,6 +25,9 @@ const Navbar = () => {
   useEffect(() => {
     if (user && !isAdmin) {
       fetchCartCount();
+
+      window.addEventListener("cartUpdated", fetchCartCount);
+      return () => window.removeEventListener("cartUpdated", fetchCartCount);
     } else {
       setCartCount(0);
     }
@@ -33,9 +36,10 @@ const Navbar = () => {
   const fetchCartCount = async () => {
     try {
       const res = await API.get("/cart");
-      const items = res.data.cart?.items || [];
-      const totalQty = items.reduce((acc, item) => acc + (item.quantity || 1), 0);
-      setCartCount(totalQty);
+      const validItems = (res.data.cart?.items || []).filter(
+        (item) => item.product
+      );
+      setCartCount(validItems.length);
     } catch {
       setCartCount(0);
     }
