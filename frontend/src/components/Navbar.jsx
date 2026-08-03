@@ -88,8 +88,12 @@ const Navbar = () => {
             <img
               src={logo}
               alt="Sasikumar Electronics"
-              className="website-logo"
+              className="website-logo-circle"
             />
+            <div className="brand-text-wrap">
+              <span className="brand-title-gold">SK</span>
+              <span className="brand-title-white">ELECTRONICS</span>
+            </div>
           </Link>
 
           <div className="nav-search-wrap">
