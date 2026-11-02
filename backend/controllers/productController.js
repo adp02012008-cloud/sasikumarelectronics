@@ -286,13 +286,69 @@ exports.updateProduct = async (req, res) => {
       });
     }
 
-    product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      returnDocument: "after",
-      runValidators: true,
-    });
+    const updateData = {};
+
+    if (req.body.name !== undefined) updateData.name = req.body.name;
+    if (req.body.description !== undefined) updateData.description = req.body.description;
+    if (req.body.category !== undefined) updateData.category = req.body.category;
+    if (req.body.brand !== undefined) updateData.brand = req.body.brand;
+    if (req.body.price !== undefined) updateData.price = toNumber(req.body.price, product.price);
+    if (req.body.minPrice !== undefined) updateData.minPrice = toNumber(req.body.minPrice, product.minPrice);
+    if (req.body.maxPrice !== undefined) updateData.maxPrice = toNumber(req.body.maxPrice, product.maxPrice);
+    if (req.body.stock !== undefined) updateData.stock = toNumber(req.body.stock, product.stock);
+    if (req.body.demand !== undefined) updateData.demand = toNumber(req.body.demand, product.demand);
+    if (req.body.dynamicPricing !== undefined) {
+      updateData.dynamicPricing =
+        req.body.dynamicPricing === "true" || req.body.dynamicPricing === true;
+    }
+
+    // Determine final images list
+    let updatedImages = null;
+
+    if (req.body.existingImages !== undefined) {
+      try {
+        const parsed =
+          typeof req.body.existingImages === "string"
+            ? JSON.parse(req.body.existingImages)
+            : req.body.existingImages;
+        if (Array.isArray(parsed)) {
+          updatedImages = parsed;
+        }
+      } catch (err) {
+        console.error("Error parsing existingImages:", err);
+      }
+    }
+
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map((file) => ({
+        url: file.path,
+        public_id: file.filename,
+      }));
+      if (updatedImages === null) {
+        updatedImages = [...(product.images || []), ...newImages];
+      } else {
+        updatedImages = [...updatedImages, ...newImages];
+      }
+    } else if (req.body.images && Array.isArray(req.body.images)) {
+      updatedImages = req.body.images;
+    }
+
+    if (updatedImages !== null) {
+      updateData.images = updatedImages;
+    }
+
+    product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      {
+        returnDocument: "after",
+        runValidators: true,
+      }
+    );
 
     res.status(200).json({
       success: true,
+      message: "Product Updated Successfully",
       product,
     });
   } catch (error) {

@@ -2,6 +2,14 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/User");
 
+const ADMIN_EMAILS = [
+  "adp02012008@gmail.com",
+  "sdhivakar2901@gmail.com",
+  process.env.ADMIN_EMAIL,
+]
+  .filter(Boolean)
+  .map((e) => e.toLowerCase().trim());
+
 passport.use(
   new GoogleStrategy(
     {
@@ -11,12 +19,14 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile.emails?.[0]?.value;
+        const rawEmail = profile.emails?.[0]?.value;
 
-        if (!email) {
+        if (!rawEmail) {
           return done(null, false);
         }
 
+        const email = rawEmail.toLowerCase().trim();
+        const isAdmin = ADMIN_EMAILS.includes(email);
         const photoUrl = profile.photos?.[0]?.value || "";
         let user = await User.findOne({ email });
 
@@ -34,6 +44,10 @@ passport.use(
             user.avatar = photoUrl;
             updated = true;
           }
+          if (isAdmin && user.role !== "admin") {
+            user.role = "admin";
+            updated = true;
+          }
           if (updated) {
             await user.save();
           }
@@ -46,6 +60,7 @@ passport.use(
           email,
           googleId: profile.id,
           avatar: photoUrl,
+          role: isAdmin ? "admin" : "user",
         });
 
         return done(null, user);

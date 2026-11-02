@@ -74,7 +74,8 @@ new mongoose.Schema(
       type:String,
       enum:[
         "user",
-        "admin"
+        "admin",
+        "superadmin"
       ],
       default:"user"
     },

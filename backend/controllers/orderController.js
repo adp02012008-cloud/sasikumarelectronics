@@ -14,6 +14,21 @@ const statusFlow = {
   Cancelled: [],
 };
 
+const ADMIN_EMAILS = [
+  "adp02012008@gmail.com",
+  "sdhivakar2901@gmail.com",
+  process.env.ADMIN_EMAIL,
+]
+  .filter(Boolean)
+  .map((e) => e.toLowerCase().trim());
+
+const isUserAdmin = (user) => {
+  if (!user) return false;
+  const role = user.role;
+  const email = (user.email || "").toLowerCase().trim();
+  return role === "admin" || role === "superadmin" || ADMIN_EMAILS.includes(email);
+};
+
 const formatItems = (order) => {
   return order.orderItems
     .map(
@@ -220,7 +235,7 @@ exports.getSingleOrder = async (req, res) => {
 
     if (
       order.user._id.toString() !== req.user.id &&
-      req.user.role !== "admin"
+      !isUserAdmin(req.user)
     ) {
       return res.status(403).json({
         success: false,
@@ -255,7 +270,7 @@ exports.downloadInvoice = async (req, res) => {
 
     if (
       order.user._id.toString() !== req.user.id &&
-      req.user.role !== "admin"
+      !isUserAdmin(req.user)
     ) {
       return res.status(403).json({
         success: false,

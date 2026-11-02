@@ -4,7 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import API from "../api/axios";
 
 const Profile = () => {
-  const { user, logout, updateUser } = useContext(AuthContext);
+  const { user, logout, updateUser, isAdmin } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [profileData, setProfileData] = useState(null);
@@ -196,7 +196,7 @@ const Profile = () => {
             <h2>{profileData?.name || "User Profile"}</h2>
             <p className="profile-email">📧 {profileData?.email}</p>
             <span className="profile-role-badge">
-              {profileData?.role === "admin" ? "⚡ Admin Account" : "🛍️ Customer Account"}
+              {isAdmin || profileData?.role === "admin" ? "⚡ Admin Account" : "🛍️ Customer Account"}
             </span>
           </div>
           <button className="profile-logout-btn" onClick={handleLogout}>
@@ -214,6 +214,16 @@ const Profile = () => {
 
         {/* Quick Account Navigation Grid */}
         <div className="profile-shortcuts-grid">
+          {isAdmin && (
+            <Link to="/admin" className="shortcut-card" style={{ border: "2px solid #3b82f6", background: "rgba(59, 130, 246, 0.05)" }}>
+              <div className="shortcut-icon">⚡</div>
+              <div className="shortcut-text">
+                <h3>Admin Panel</h3>
+                <p>Manage products, orders & users</p>
+              </div>
+            </Link>
+          )}
+
           <Link to="/orders" className="shortcut-card">
             <div className="shortcut-icon">📦</div>
             <div className="shortcut-text">

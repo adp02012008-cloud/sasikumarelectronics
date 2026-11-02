@@ -146,6 +146,17 @@ export const AuthProvider =
     setUser(updated);
   };
 
+  const ADMIN_EMAILS = [
+    "adp02012008@gmail.com",
+    "sdhivakar2901@gmail.com",
+  ];
+
+  const userEmail = (user?.email || "").toLowerCase().trim();
+  const isAdmin =
+    user?.role === "admin" ||
+    user?.role === "superadmin" ||
+    ADMIN_EMAILS.includes(userEmail);
+
   return (
     <AuthContext.Provider
       value={{
@@ -154,7 +165,7 @@ export const AuthProvider =
         logout,
         updateUser,
         isAuthenticated: !!user,
-        isAdmin: user?.role === "admin",
+        isAdmin,
       }}
     >
       {children}

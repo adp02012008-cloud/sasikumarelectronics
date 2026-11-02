@@ -15,6 +15,16 @@ import {
  AuthContext,
 } from "../context/AuthContext";
 
+const ADMIN_EMAILS = [
+  "adp02012008@gmail.com",
+  "sdhivakar2901@gmail.com",
+];
+
+const checkIsAdmin = (u) =>
+  u?.role === "admin" ||
+  u?.role === "superadmin" ||
+  ADMIN_EMAILS.includes((u?.email || "").toLowerCase().trim());
+
 const Login = () => {
  const navigate = useNavigate();
 
@@ -58,7 +68,7 @@ const Login = () => {
      "/login"
     );
 
-    if (userData.role === "admin") {
+    if (checkIsAdmin(userData)) {
      navigate("/admin");
     } else {
      navigate("/products");
@@ -103,7 +113,7 @@ const Login = () => {
 
    alert("Login Successful");
 
-   if (res.data.user.role === "admin") {
+   if (checkIsAdmin(res.data.user)) {
     navigate("/admin");
    } else {
     navigate("/products");

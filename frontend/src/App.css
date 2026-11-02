@@ -2700,11 +2700,336 @@ td{
   object-fit:contain;
 }
 
+.product-actions-cell{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.edit-btn{
+  background:#2563eb;
+  color:white;
+  padding:8px 16px;
+  border-radius:8px;
+  font-weight:700;
+  border:none;
+  cursor:pointer;
+  transition:all 0.2s ease;
+}
+
+.edit-btn:hover{
+  background:#1d4ed8;
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(37,99,235,.25);
+}
+
 .delete-btn{
   background:#dc2626;
   color:white;
-  padding:10px 18px;
+  padding:8px 16px;
   border-radius:8px;
+  font-weight:700;
+  border:none;
+  cursor:pointer;
+  transition:all 0.2s ease;
+}
+
+.delete-btn:hover{
+  background:#b91c1c;
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(220,38,38,.25);
+}
+
+.stock-badge-low{
+  background:#fee2e2;
+  color:#b91c1c;
+  padding:4px 8px;
+  border-radius:6px;
+  font-weight:700;
+}
+
+.admin-table-toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:24px 28px;
+  border-bottom:1px solid #f1f5f9;
+  flex-wrap:wrap;
+  gap:16px;
+}
+
+.admin-search-wrapper{
+  position:relative;
+  display:flex;
+  align-items:center;
+  min-width:300px;
+}
+
+.admin-search-input{
+  width:100%;
+  padding:12px 38px 12px 16px;
+  border-radius:10px;
+  border:1px solid #cbd5e1;
+  background:#f8fafc;
+  font-size:14px;
+  transition:all 0.2s ease;
+}
+
+.admin-search-input:focus{
+  outline:none;
+  background:white;
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+
+.clear-search-btn{
+  position:absolute;
+  right:10px;
+  background:transparent;
+  border:none;
+  color:#94a3b8;
+  font-size:14px;
+  cursor:pointer;
+  padding:4px;
+  border-radius:50%;
+}
+
+.clear-search-btn:hover{
+  color:#475569;
+}
+
+/* =========================
+   EDIT PRODUCT MODAL
+========================= */
+
+.edit-product-modal{
+  max-width:880px;
+  width:95%;
+  max-height:90vh;
+  overflow-y:auto;
+  box-shadow:0 20px 45px rgba(15,23,42,.25);
+}
+
+.edit-product-form{
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+}
+
+.edit-form-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:16px;
+}
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.form-group label{
+  font-size:13px;
+  font-weight:700;
+  color:#475569;
+}
+
+.form-group input,
+.form-group textarea{
+  padding:12px 14px;
+  border-radius:8px;
+  border:1px solid #cbd5e1;
+  font-size:14px;
+  background:#f8fafc;
+  transition:all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus{
+  outline:none;
+  border-color:#2563eb;
+  background:white;
+  box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+
+.form-group-full{
+  grid-column:span 2;
+}
+
+/* Edit Media Section */
+
+.edit-media-section{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:14px;
+  padding:20px;
+}
+
+.edit-media-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.edit-media-header h3{
+  font-size:16px;
+  margin:0;
+  color:#1e293b;
+}
+
+.media-counter-badge{
+  background:#dbeafe;
+  color:#1d4ed8;
+  font-size:12px;
+  font-weight:800;
+  padding:4px 10px;
+  border-radius:999px;
+}
+
+.image-preview-block{
+  margin-top:12px;
+}
+
+.preview-label{
+  font-size:13px;
+  font-weight:700;
+  color:#64748b;
+  display:block;
+  margin-bottom:8px;
+}
+
+.image-thumbnails-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.image-thumbnail-item{
+  position:relative;
+  width:90px;
+  height:90px;
+  border-radius:10px;
+  border:2px solid #e2e8f0;
+  background:white;
+  padding:4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  transition:all 0.2s ease;
+}
+
+.image-thumbnail-item.is-new{
+  border-color:#3b82f6;
+  border-style:dashed;
+}
+
+.image-thumbnail-item img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:6px;
+}
+
+.thumbnail-delete-btn{
+  position:absolute;
+  top:4px;
+  right:4px;
+  width:22px;
+  height:22px;
+  background:#ef4444;
+  color:white;
+  border:none;
+  border-radius:50%;
+  font-size:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.2);
+  transition:transform 0.15s ease;
+}
+
+.thumbnail-delete-btn:hover{
+  transform:scale(1.15);
+  background:#dc2626;
+}
+
+.thumbnail-badge{
+  position:absolute;
+  bottom:4px;
+  left:4px;
+  background:rgba(15,23,42,.7);
+  color:white;
+  font-size:10px;
+  font-weight:700;
+  padding:2px 5px;
+  border-radius:4px;
+}
+
+.thumbnail-badge.new-tag{
+  background:#2563eb;
+}
+
+.upload-new-block{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px dashed #cbd5e1;
+}
+
+.upload-new-label{
+  font-size:13px;
+  font-weight:700;
+  color:#334155;
+  display:block;
+  margin-bottom:6px;
+}
+
+.edit-modal-footer{
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  padding-top:12px;
+  border-top:1px solid #e2e8f0;
+}
+
+.cancel-btn{
+  background:#f1f5f9;
+  color:#475569;
+  padding:12px 24px;
+  border-radius:8px;
+  font-weight:700;
+  border:1px solid #cbd5e1;
+  cursor:pointer;
+  transition:all 0.2s ease;
+}
+
+.cancel-btn:hover:not(:disabled){
+  background:#e2e8f0;
+  color:#1e293b;
+}
+
+.save-btn{
+  background:#2563eb;
+  color:white;
+  padding:12px 28px;
+  border-radius:8px;
+  font-weight:800;
+  border:none;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  box-shadow:0 4px 14px rgba(37,99,235,.3);
+}
+
+.save-btn:hover:not(:disabled){
+  background:#1d4ed8;
+  transform:translateY(-1px);
+}
+
+.save-btn:disabled,
+.cancel-btn:disabled{
+  opacity:0.65;
+  cursor:not-allowed;
 }
 
 .role-badge{
@@ -3715,6 +4040,27 @@ td{
   .admin-order-grid{
     grid-template-columns:1fr;
     gap:14px;
+  }
+
+  .edit-form-grid{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+
+  .form-group-full{
+    grid-column:span 1;
+  }
+
+  .admin-search-wrapper{
+    min-width:100%;
+  }
+
+  .edit-modal-footer{
+    flex-direction:column-reverse;
+  }
+
+  .edit-modal-footer button{
+    width:100%;
   }
 
   .order-items-table{

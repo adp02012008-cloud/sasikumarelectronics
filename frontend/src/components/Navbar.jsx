@@ -5,14 +5,12 @@ import API from "../api/axios";
 import logo from "../assets/logo.png";
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, isAdmin } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [keyword, setKeyword] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [cartCount, setCartCount] = useState(0);
-
-  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     const timer = setTimeout(() => {
