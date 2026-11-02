@@ -60,11 +60,39 @@ const ProductDetails = () => {
   const fetchProduct = async () => {
     try {
       const res = await API.get(`/products/${id}`);
+      const prod = res.data.product;
 
-      setProduct(res.data.product);
+      setProduct(prod);
       setSelectedImage(
-        res.data.product.images?.[0]?.url || "/favicon.svg"
+        prod.images?.[0]?.url || "/favicon.svg"
       );
+
+      if (prod) {
+        document.title = `${prod.name} | Sasikumar Electronics`;
+
+        const setMeta = (attr, val, content) => {
+          if (!content) return;
+          let el = document.querySelector(`meta[${attr}="${val}"]`);
+          if (!el) {
+            el = document.createElement("meta");
+            el.setAttribute(attr, val);
+            document.head.appendChild(el);
+          }
+          el.setAttribute("content", content);
+        };
+
+        const imgUrl = prod.images?.[0]?.url || "";
+        if (imgUrl) {
+          setMeta("property", "og:image", imgUrl);
+          setMeta("name", "twitter:image", imgUrl);
+        }
+        setMeta("property", "og:title", `${prod.name} - ₹${prod.price}`);
+        setMeta("name", "twitter:title", `${prod.name} - ₹${prod.price}`);
+        if (prod.description) {
+          setMeta("property", "og:description", prod.description.slice(0, 160));
+          setMeta("name", "description", prod.description.slice(0, 160));
+        }
+      }
     } catch (error) {
       console.log(error);
       alert("Product not found");

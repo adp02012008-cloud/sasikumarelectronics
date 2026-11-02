@@ -1,0 +1,19 @@
+{
+  "rewrites": [
+    {
+      "source": "/products/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*([wW]hats[aA]pp|facebookexternalhit|[fF]acebot|[tT]witterbot|[tT]elegram[bB]ot|[lL]inked[iI]n[bB]ot|[sS]lackbot|[dD]iscordbot|[gG]ooglebot|[bB]ingbot|[aA]pplebot|[pP]interest|[bB]aiduspider|[sS]kype[uU]ri[pP]review|[yY]andex[bB]ot|[eE]mbedly|[qQ]uora|vkShare).*"
+        }
+      ],
+      "destination": "/api/og?id=:id"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
