@@ -129,37 +129,95 @@ exports.createOrder = async (req, res) => {
 
     const invoicePath = generateInvoice(order);
 
+    const customerEmail = (
+      order.shippingAddress?.email ||
+      order.user?.email ||
+      ""
+    ).trim();
+
+    const customerAttachments = [];
+    if (invoicePath && fs.existsSync(invoicePath)) {
+      customerAttachments.push({
+        filename: `Invoice_${order._id}.pdf`,
+        path: invoicePath,
+        contentType: "application/pdf",
+      });
+    }
+
+    if (customerEmail) {
+      await safeSendEmail({
+        to: customerEmail,
+        subject: `Your Sasikumar Electronics Order Confirmed (#${String(order._id).slice(-6).toUpperCase()})`,
+        attachments: customerAttachments,
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <div style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 14px; margin-bottom: 20px;">
+              <h1 style="color: #2563eb; margin: 0; font-size: 24px;">Sasikumar Electronics</h1>
+              <p style="color: #64748b; margin: 4px 0 0; font-size: 14px;">Order Confirmation</p>
+            </div>
+
+            <h2 style="color: #0f172a; margin-top: 0;">Order Confirmed!</h2>
+            <p>Hello <b>${order.shippingAddress.fullName}</b>,</p>
+            <p>Thank you for shopping with us! Your order has been placed successfully.</p>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 14px; margin: 16px 0;">
+              <p style="margin: 4px 0;"><b>Order ID:</b> ${order._id}</p>
+              <p style="margin: 4px 0;"><b>Order Date:</b> ${new Date().toLocaleDateString("en-IN")}</p>
+              <p style="margin: 4px 0;"><b>Payment Method:</b> ${order.paymentMethod}</p>
+              <p style="margin: 4px 0;"><b>Total Amount:</b> ₹${order.totalPrice}</p>
+            </div>
+
+            <h3 style="border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">Items Ordered</h3>
+            <ul style="padding-left: 20px; line-height: 1.8;">
+              ${formatItems(order)}
+            </ul>
+
+            <h3 style="border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">Delivery Address</h3>
+            <p style="line-height: 1.5; color: #334155;">
+              ${order.shippingAddress.fullName}<br />
+              ${order.shippingAddress.address}<br />
+              ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}<br />
+              <b>Phone:</b> ${order.shippingAddress.phone}
+              ${customerEmail ? `<br /><b>Email:</b> ${customerEmail}` : ""}
+            </p>
+
+            <p style="margin-top: 24px; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #64748b; text-align: center;">
+              Your invoice is attached with this email. If you have any questions, feel free to reach out to us at <a href="mailto:${process.env.ADMIN_EMAIL || process.env.EMAIL_USER || 'sdhivakar2901@gmail.com'}">${process.env.ADMIN_EMAIL || process.env.EMAIL_USER || 'sdhivakar2901@gmail.com'}</a>.
+            </p>
+          </div>
+        `,
+      });
+    }
+
+    const adminRecipient =
+      process.env.ADMIN_EMAIL || process.env.EMAIL_USER || "sdhivakar2901@gmail.com";
+
     await safeSendEmail({
-      to: order.user.email,
-      subject: "Your Sasikumar Electronics Order Confirmed",
+      to: adminRecipient,
+      subject: `New Order Received (#${String(order._id).slice(-6).toUpperCase()}) - ₹${order.totalPrice}`,
       html: `
-        <h2>Order Confirmed</h2>
-        <p>Hello ${order.shippingAddress.fullName},</p>
-        <p>Your order has been placed successfully.</p>
+        <div style="font-family: Arial, sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <h2 style="color: #2563eb; margin-top: 0;">New Order Notification</h2>
+          <p>A new order has been received on Sasikumar Electronics.</p>
 
-        <p><b>Order ID:</b> ${order._id}</p>
-        <p><b>Total:</b> ₹${order.totalPrice}</p>
-        <p><b>Payment ID:</b> ${order.paymentInfo?.razorpayPaymentId || "N/A"}</p>
+          <div style="background: #f8fafc; border-radius: 8px; padding: 14px; margin: 16px 0;">
+            <p style="margin: 4px 0;"><b>Order ID:</b> ${order._id}</p>
+            <p style="margin: 4px 0;"><b>Customer:</b> ${order.shippingAddress.fullName}</p>
+            <p style="margin: 4px 0;"><b>Phone:</b> ${order.shippingAddress.phone}</p>
+            <p style="margin: 4px 0;"><b>Email:</b> ${customerEmail || "Not provided"}</p>
+            <p style="margin: 4px 0;"><b>Total:</b> ₹${order.totalPrice}</p>
+          </div>
 
-        <h3>Products</h3>
-        <ul>${formatItems(order)}</ul>
+          <h3>Products</h3>
+          <ul style="padding-left: 20px; line-height: 1.8;">
+            ${formatItems(order)}
+          </ul>
 
-        <p>Thank you for shopping with Sasikumar Electronics.</p>
-      `,
-    });
-
-    await safeSendEmail({
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_FROM,
-      subject: "New Order Received - Sasikumar Electronics",
-      html: `
-        <h2>New Order Received</h2>
-        <p><b>Customer:</b> ${order.shippingAddress.fullName}</p>
-        <p><b>Email:</b> ${order.user.email}</p>
-        <p><b>Phone:</b> ${order.shippingAddress.phone}</p>
-        <p><b>Total:</b> ₹${order.totalPrice}</p>
-
-        <h3>Products</h3>
-        <ul>${formatItems(order)}</ul>
+          <h3>Delivery Address</h3>
+          <p style="line-height: 1.5;">
+            ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}
+          </p>
+        </div>
       `,
     });
 
@@ -373,29 +431,61 @@ exports.updateOrderStatus = async (req, res) => {
 
     generateInvoice(order);
 
-    await safeSendEmail({
-      to: order.user.email,
-      subject: `Order Status Updated - ${order.orderStatus}`,
-      html: `
-        <h2>Order Status Updated</h2>
-        <p>Hello ${order.shippingAddress?.fullName || order.user?.name},</p>
-        <p>Your order is now <b>${order.orderStatus}</b>.</p>
-        <p><b>Order ID:</b> ${order._id}</p>
+    const customerEmail = (
+      order.shippingAddress?.email ||
+      order.user?.email ||
+      ""
+    ).trim();
 
-        <h3>Products</h3>
-        <ul>${formatItems(order)}</ul>
-      `,
-    });
+    if (customerEmail) {
+      await safeSendEmail({
+        to: customerEmail,
+        subject: `Order Status Update: ${order.orderStatus} - Sasikumar Electronics`,
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <div style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 14px; margin-bottom: 20px;">
+              <h1 style="color: #2563eb; margin: 0; font-size: 24px;">Sasikumar Electronics</h1>
+              <p style="color: #64748b; margin: 4px 0 0; font-size: 14px;">Order Status Update</p>
+            </div>
+
+            <h2 style="color: #0f172a; margin-top: 0;">Order Status: ${order.orderStatus}</h2>
+            <p>Hello <b>${order.shippingAddress?.fullName || order.user?.name || "Customer"}</b>,</p>
+            <p>Your order status has been updated to: <span style="background: #dbeafe; color: #1d4ed8; padding: 4px 10px; border-radius: 6px; font-weight: bold;">${order.orderStatus}</span></p>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 14px; margin: 16px 0;">
+              <p style="margin: 4px 0;"><b>Order ID:</b> ${order._id}</p>
+              <p style="margin: 4px 0;"><b>Total Amount:</b> ₹${order.totalPrice}</p>
+            </div>
+
+            <h3 style="border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">Items</h3>
+            <ul style="padding-left: 20px; line-height: 1.8;">
+              ${formatItems(order)}
+            </ul>
+
+            <p style="margin-top: 24px; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #64748b; text-align: center;">
+              Thank you for choosing Sasikumar Electronics!
+            </p>
+          </div>
+        `,
+      });
+    }
+
+    const adminRecipient =
+      process.env.ADMIN_EMAIL || process.env.EMAIL_USER || "sdhivakar2901@gmail.com";
 
     await safeSendEmail({
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_FROM,
-      subject: `Order Updated - ${order.orderStatus}`,
+      to: adminRecipient,
+      subject: `Order Status Changed to ${order.orderStatus} (#${String(order._id).slice(-6).toUpperCase()})`,
       html: `
-        <h2>Order Status Updated</h2>
-        <p><b>Order ID:</b> ${order._id}</p>
-        <p><b>Status:</b> ${order.orderStatus}</p>
-        <p><b>Customer:</b> ${order.shippingAddress?.fullName}</p>
-        <p><b>Total:</b> ₹${order.totalPrice}</p>
+        <div style="font-family: Arial, sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <h2 style="color: #2563eb; margin-top: 0;">Order Status Updated</h2>
+          <p><b>Order ID:</b> ${order._id}</p>
+          <p><b>New Status:</b> ${order.orderStatus}</p>
+          <p><b>Customer:</b> ${order.shippingAddress?.fullName || "Customer"}</p>
+          <p><b>Phone:</b> ${order.shippingAddress?.phone || "N/A"}</p>
+          <p><b>Email:</b> ${customerEmail || "Not provided"}</p>
+          <p><b>Total:</b> ₹${order.totalPrice}</p>
+        </div>
       `,
     });
 

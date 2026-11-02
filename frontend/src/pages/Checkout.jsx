@@ -18,6 +18,7 @@ const Checkout = () => {
 
   const [address, setAddress] = useState({
     fullName: "",
+    email: "",
     phone: "",
     address: "",
     city: "",
@@ -46,12 +47,16 @@ const Checkout = () => {
         setSavedAddresses(addrs);
 
         if (addrs.length > 0) {
-          applyAddress(addrs[0], uData.name);
+          applyAddress(addrs[0], uData.name, uData.email);
           setSelectedAddressIdx(0);
           setIsManualAddress(false);
         } else {
           setIsManualAddress(true);
-          setAddress((prev) => ({ ...prev, fullName: uData.name || "" }));
+          setAddress((prev) => ({
+            ...prev,
+            fullName: uData.name || "",
+            email: uData.email || "",
+          }));
         }
       }
     } catch {
@@ -59,9 +64,10 @@ const Checkout = () => {
     }
   };
 
-  const applyAddress = (addrObj, userName = "") => {
+  const applyAddress = (addrObj, userName = "", userEmail = "") => {
     setAddress({
       fullName: userName || userProfile?.name || address.fullName || "",
+      email: userEmail || userProfile?.email || address.email || "",
       phone: addrObj.phone || "",
       address: addrObj.street || "",
       city: addrObj.city || "",
@@ -74,7 +80,7 @@ const Checkout = () => {
   const handleSelectSavedAddress = (idx) => {
     setSelectedAddressIdx(idx);
     setIsManualAddress(false);
-    applyAddress(savedAddresses[idx]);
+    applyAddress(savedAddresses[idx], userProfile?.name, userProfile?.email);
   };
 
   const fetchCart = async (ids) => {
@@ -151,13 +157,22 @@ const Checkout = () => {
       !address.state ||
       !address.pincode
     ) {
-      alert("Please fill all delivery address details");
+      alert("Please fill all required delivery address details");
       return false;
     }
 
     if (address.phone.length < 10) {
       alert("Please enter a valid phone number");
       return false;
+    }
+
+    // Email is strictly optional - only validate format if provided
+    if (address.email && address.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(address.email.trim())) {
+        alert("Please enter a valid email address or leave it blank");
+        return false;
+      }
     }
 
     return true;
@@ -242,6 +257,7 @@ const Checkout = () => {
 
         prefill: {
           name: address.fullName,
+          email: address.email || "",
           contact: address.phone,
         },
 
@@ -323,6 +339,7 @@ const Checkout = () => {
                       setIsManualAddress(true);
                       setAddress((prev) => ({
                         ...prev,
+                        email: prev.email || userProfile?.email || "",
                         phone: "",
                         address: "",
                         city: "",
@@ -334,6 +351,21 @@ const Checkout = () => {
                     {isManualAddress ? "✓ Entering Manual Address" : "+ Use / Add a Different Address"}
                   </button>
                 </div>
+
+                {!isManualAddress && (
+                  <div className="saved-addr-email-row">
+                    <label>
+                      Order Updates & Invoice Email <span className="optional-tag">(Optional)</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="e.g. customer@example.com (optional)"
+                      value={address.email}
+                      onChange={handleAddressChange}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -363,6 +395,19 @@ const Checkout = () => {
                       onChange={handleAddressChange}
                     />
                   </div>
+                </div>
+
+                <div className="input-field-wrap full-width">
+                  <label>
+                    Email Address <span className="optional-tag">(Optional - for invoice & delivery updates)</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="e.g. customer@example.com (optional)"
+                    value={address.email}
+                    onChange={handleAddressChange}
+                  />
                 </div>
 
                 <div className="input-field-wrap full-width">

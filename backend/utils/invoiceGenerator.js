@@ -59,19 +59,33 @@ const generateInvoice = (order) => {
 
   doc.fillColor("#111827").fontSize(11);
   doc.text(order.shippingAddress?.fullName || "Customer", 350, y + 20);
-  doc.text(`Phone: ${order.shippingAddress?.phone || "N/A"}`, 350, y + 38);
+
+  const customerEmail =
+    order.shippingAddress?.email || order.user?.email || "";
+
+  let currentY = y + 36;
+  if (customerEmail) {
+    doc.fontSize(10).text(`Email: ${customerEmail}`, 350, currentY);
+    currentY += 16;
+  }
+
+  doc.fontSize(10).text(`Phone: ${order.shippingAddress?.phone || "N/A"}`, 350, currentY);
+  currentY += 16;
+
   doc.text(
     `${order.shippingAddress?.address || ""}, ${order.shippingAddress?.city || ""}`,
     350,
-    y + 56,
+    currentY,
     {
       width: 190,
     }
   );
+  currentY += 28;
+
   doc.text(
     `${order.shippingAddress?.state || ""} - ${order.shippingAddress?.pincode || ""}`,
     350,
-    y + 88
+    currentY
   );
 
   y = 250;

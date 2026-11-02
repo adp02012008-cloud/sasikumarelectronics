@@ -162,7 +162,11 @@ const AdminOrders = () => {
                           order.user?.name ||
                           "Customer"}
                       </b>
-                      <small>{order.user?.email || "No email"}</small>
+                      <small>
+                        {order.shippingAddress?.email ||
+                          order.user?.email ||
+                          "No email"}
+                      </small>
                       <small>{order.shippingAddress?.phone || "No phone"}</small>
                     </div>
                   </td>
@@ -218,7 +222,12 @@ const AdminOrders = () => {
               <div>
                 <h3>Customer</h3>
                 <p>Name: {selectedOrder.shippingAddress?.fullName}</p>
-                <p>Email: {selectedOrder.user?.email}</p>
+                <p>
+                  Email:{" "}
+                  {selectedOrder.shippingAddress?.email ||
+                    selectedOrder.user?.email ||
+                    "Not provided"}
+                </p>
                 <p>Phone: {selectedOrder.shippingAddress?.phone}</p>
               </div>
 
