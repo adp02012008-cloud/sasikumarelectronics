@@ -376,6 +376,11 @@
     font-size:34px !important;
   }
 
+  .floating-share-btn{
+    width:54px !important;
+    height:54px !important;
+  }
+
   /* MOBILE ADMIN */
 
   .admin-page,

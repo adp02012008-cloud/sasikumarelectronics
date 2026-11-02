@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../api/axios";
+import ShareModal from "../components/ShareModal";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistBusy, setWishlistBusy] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
@@ -23,6 +25,29 @@ const ProductDetails = () => {
     fetchReviews();
     checkWishlistStatus();
   }, [id]);
+
+  const handleShare = async () => {
+    if (!product) return;
+    const origin = window.location.origin;
+    const shareUrl = `${origin}/products/${product._id}`;
+    const priceFormatted = Number(product.price || 0).toLocaleString("en-IN");
+    const shareText = `Check out ${product.name} on Sasikumar Electronics for ₹${priceFormatted}!`;
+
+    if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share({
+          title: `${product.name} | Sasikumar Electronics`,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        if (err.name === "AbortError") return;
+      }
+    }
+
+    setIsShareOpen(true);
+  };
 
   const getLoggedUser = () => {
     try {
@@ -199,20 +224,56 @@ const ProductDetails = () => {
           </div>
 
           <div className="big-image-box">
-            <button
-              className={`floating-heart ${isWishlisted ? "saved" : ""}`}
-              disabled={wishlistBusy}
-              onClick={toggleWishlist}
-            >
-              {isWishlisted ? "♥" : "♡"}
-            </button>
+            <div className="image-floating-actions">
+              <button
+                type="button"
+                className={`floating-heart ${isWishlisted ? "saved" : ""}`}
+                disabled={wishlistBusy}
+                onClick={toggleWishlist}
+                title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+              >
+                {isWishlisted ? "♥" : "♡"}
+              </button>
+
+              <button
+                type="button"
+                className="floating-share-btn"
+                onClick={handleShare}
+                title="Share this product"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+              </button>
+            </div>
 
             <img src={selectedImage} alt={product.name} />
           </div>
         </div>
 
         <div className="product-main-info">
-          <h1>{product.name}</h1>
+          <div className="product-title-row">
+            <h1>{product.name}</h1>
+            <button
+              type="button"
+              className="detail-header-share-btn"
+              onClick={handleShare}
+              title="Share product"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              <span>Share</span>
+            </button>
+          </div>
 
           <p className="brand-line">
             Brand: <b>{product.brand || "Generic"}</b>
@@ -307,6 +368,21 @@ const ProductDetails = () => {
             {isWishlisted ? "Saved in Wishlist ♥" : "Add to Wish List"}
           </button>
 
+          <button
+            type="button"
+            className="share-wide-btn"
+            onClick={handleShare}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            Share this product
+          </button>
+
           <p className="secure-text">🔒 Secure transaction</p>
         </aside>
       </div>
@@ -364,6 +440,12 @@ const ProductDetails = () => {
           )}
         </div>
       </section>
+
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        product={product}
+      />
     </div>
   );
 };

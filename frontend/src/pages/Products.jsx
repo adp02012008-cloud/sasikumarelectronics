@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import ShareModal from "../components/ShareModal";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -8,6 +9,7 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [wishlistIds, setWishlistIds] = useState([]);
   const [wishlistBusy, setWishlistBusy] = useState([]);
+  const [shareProductTarget, setShareProductTarget] = useState(null);
 
   // Filter & Sort States
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -23,6 +25,29 @@ const Products = () => {
   });
 
   const navigate = useNavigate();
+
+  const handleShare = async (prod) => {
+    if (!prod) return;
+    const origin = window.location.origin;
+    const shareUrl = `${origin}/products/${prod._id}`;
+    const priceFormatted = Number(prod.price || 0).toLocaleString("en-IN");
+    const shareText = `Check out ${prod.name} on Sasikumar Electronics for ₹${priceFormatted}!`;
+
+    if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share({
+          title: `${prod.name} | Sasikumar Electronics`,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        if (err.name === "AbortError") return;
+      }
+    }
+
+    setShareProductTarget(prod);
+  };
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -400,6 +425,26 @@ const Products = () => {
                         {saved ? "♥" : "♡"}
                       </button>
 
+                      <button
+                        type="button"
+                        className="amazon-share-card-btn"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleShare(product);
+                        }}
+                        title="Share this product"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="18" cy="5" r="3"></circle>
+                          <circle cx="6" cy="12" r="3"></circle>
+                          <circle cx="18" cy="19" r="3"></circle>
+                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                      </button>
+
                       <img
                         src={product.images?.[0]?.url || "/favicon.svg"}
                         alt={product.name}
@@ -538,6 +583,12 @@ const Products = () => {
           </div>
         </div>
       )}
+
+      <ShareModal
+        isOpen={Boolean(shareProductTarget)}
+        onClose={() => setShareProductTarget(null)}
+        product={shareProductTarget}
+      />
     </div>
   );
 };
