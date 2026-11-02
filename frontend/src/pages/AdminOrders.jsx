@@ -31,6 +31,16 @@ const AdminOrders = () => {
     fetchOrders();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && selectedOrder) {
+        setSelectedOrder(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedOrder]);
+
   const fetchOrders = async () => {
     try {
       const res = await API.get("/orders");
@@ -207,8 +217,14 @@ const AdminOrders = () => {
       </div>
 
       {selectedOrder && (
-        <div className="order-modal-bg">
-          <div className="order-modal">
+        <div
+          className="order-modal-bg"
+          onClick={() => setSelectedOrder(null)}
+        >
+          <div
+            className="order-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-head">
               <div>
                 <h2>{shortOrderId(selectedOrder._id)}</h2>

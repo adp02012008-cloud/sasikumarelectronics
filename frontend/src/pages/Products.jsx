@@ -57,6 +57,17 @@ const Products = () => {
     fetchWishlistIds();
   }, [searchParams]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (reviewProduct) setReviewProduct(null);
+        if (showMobileFilter) setShowMobileFilter(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [reviewProduct, showMobileFilter]);
+
   const getLoggedUser = () => {
     try {
       return JSON.parse(localStorage.getItem("user"));
@@ -277,6 +288,12 @@ const Products = () => {
       </div>
 
       {/* Main Content Area (Sidebar + Product Rows) */}
+      {showMobileFilter && (
+        <div
+          className="mobile-drawer-overlay"
+          onClick={() => setShowMobileFilter(false)}
+        />
+      )}
       <div className="amazon-layout-container">
         {/* Left Amazon Sidebar Filter */}
         <aside className={`amazon-sidebar ${showMobileFilter ? "mobile-drawer-open" : ""}`}>
@@ -537,8 +554,14 @@ const Products = () => {
 
       {/* Review Modal */}
       {reviewProduct && (
-        <div className="review-modal-bg">
-          <div className="review-modal">
+        <div
+          className="review-modal-bg"
+          onClick={() => setReviewProduct(null)}
+        >
+          <div
+            className="review-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2>Review Product</h2>
             <p>{reviewProduct.name}</p>
 

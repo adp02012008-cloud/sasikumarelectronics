@@ -33,6 +33,16 @@ const Products = () => {
     fetchProducts(searchValue);
   }, [searchParams]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && reviewProduct) {
+        setReviewProduct(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [reviewProduct]);
+
   const fetchProducts = async (search = "") => {
     try {
       setLoading(true);
@@ -289,8 +299,14 @@ const Products = () => {
       )}
 
       {reviewProduct && (
-        <div className="review-modal-bg">
-          <div className="review-modal">
+        <div
+          className="review-modal-bg"
+          onClick={() => setReviewProduct(null)}
+        >
+          <div
+            className="review-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2>Review Product</h2>
 
             <p>{reviewProduct.name}</p>

@@ -42,6 +42,16 @@ const AdminProducts = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && editingProduct && !isUpdating) {
+        setEditingProduct(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingProduct, isUpdating]);
+
   const fetchProducts = async () => {
     try {
       const res = await API.get("/products");

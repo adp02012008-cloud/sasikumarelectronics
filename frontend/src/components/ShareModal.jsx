@@ -8,8 +8,17 @@ const ShareModal = ({ isOpen, onClose, product }) => {
     if (!isOpen) {
       setCopied(false);
       setShowQR(false);
+      return;
     }
-  }, [isOpen]);
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !product) return null;
 

@@ -5408,3 +5408,22 @@ td{
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
+
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  z-index: 9998;
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
+.order-modal-bg,
+.review-modal-bg {
+  cursor: pointer;
+}
+
+.order-modal,
+.review-modal {
+  cursor: default;
+}
