@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     }
 
     if (!ogImageUrl) {
-      ogImageUrl = "https://sasikumarelectronics.vercel.app/logo.png";
+      ogImageUrl = "https://sasikumarelectronics.vercel.app/logologo.jpeg";
     }
 
     const title = `${name}${price ? ` - ₹${price}` : ""} | Sasikumar Electronics`;

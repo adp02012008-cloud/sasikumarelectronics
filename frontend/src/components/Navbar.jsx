@@ -2,7 +2,7 @@ import { useContext, useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import API from "../api/axios";
-import logo from "../assets/logo.png";
+import logo from "../assets/logologo.jpeg";
 
 const Navbar = () => {
   const { user, logout, isAdmin } = useContext(AuthContext);
